@@ -96,8 +96,17 @@ export default async function handler(req, res) {
   ],
   "marketRefs": {
     "similarProducts": "市面上同类产品的表现参考",
-    "priceRange": "该品类抖音主流价格带",
-    "targetGMV": "预估月GMV范围"
+    "priceRange": "该品类抖音主流价格带分布，列出3档（低价/中端/高端）及各自占比",
+    "targetGMV": "预估头部达人月GMV范围和腰部达人月GMV范围",
+    "searchVolume": "抖音站内月搜索量级估算（万级/十万级/百万级/千万级）",
+    "contentDensity": "该品类月均新增视频量级，内容供给是否饱和",
+    "conversionRate": "该品类平均视频带货转化率估算（高/中/低）"
+  },
+  "competitiveLandscape": {
+    "topPlayers": ["头部品牌/达人1及特点", "头部品牌/达人2及特点"],
+    "commonPricing": "主要竞品定价策略分析",
+    "marketGap": "当前市场未被满足的需求或价格空白带",
+    "entryAdvantage": "新手入场的差异化机会在哪"
   },
   "tags": ["标签1", "标签2"]
 }
