@@ -107,10 +107,23 @@
   .history-item {
     padding: 10px 0; border-bottom: 1px solid #f0f0f2;
     cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: space-between;
   }
   .history-item:last-child { border-bottom: none; }
   .history-item .name { font-weight: 500; }
+  .history-item .info { flex: 1; min-width: 0; }
   .history-item .meta { font-size: 12px; color: #86868b; }
+  .delete-btn {
+    width: 28px; height: 28px; border: none; border-radius: 6px;
+    background: transparent; color: #86868b; font-size: 18px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-left: 8px; transition: all 0.15s;
+  }
+  .delete-btn:hover { background: #ffe8e6; color: #ff3b30; }
+  .clear-all {
+    font-size: 12px; color: #ff3b30; cursor: pointer; float: right;
+    background: none; border: none; font-weight: 500;
+  }
 
   .empty { text-align: center; padding: 32px 0; color: #86868b; font-size: 14px; }
 </style>
@@ -203,7 +216,7 @@
 
   <!-- History -->
   <div class="card" id="historyCard">
-    <div class="card-label">历史记录</div>
+    <div class="card-label">历史记录<button class="clear-all" onclick="clearAllHistory()">清空全部</button></div>
     <div id="historyList"><div class="empty">暂无记录</div></div>
   </div>
 </div>
@@ -440,8 +453,11 @@ function renderHistory() {
   list.innerHTML = history.map((h, i) => {
     const s = h.scores || {};
     return `<div class="history-item" onclick="loadHistory(${i})">
-      <div class="name">${h.category} · 综合 ${h.overall||'?'} 分</div>
-      <div class="meta">${h.time||''} · 市场${s.market||'?'} | 竞争${s.comp||'?'} | 利润${s.profit||'?'}</div>
+      <div class="info">
+        <div class="name">${h.category} · 综合 ${h.overall||'?'} 分</div>
+        <div class="meta">${h.time||''} · 市场${s.market||'?'} | 竞争${s.comp||'?'} | 利润${s.profit||'?'}</div>
+      </div>
+      <button class="delete-btn" onclick="event.stopPropagation();deleteHistory(${i})" title="删除">×</button>
     </div>`;
   }).join('');
 }
@@ -463,6 +479,19 @@ function loadHistory(index) {
 }
 
 
+function deleteHistory(index) {
+  const key = 'douyin_analysis_history';
+  let history = JSON.parse(localStorage.getItem(key) || '[]');
+  history.splice(index, 1);
+  localStorage.setItem(key, JSON.stringify(history));
+  renderHistory();
+}
+
+function clearAllHistory() {
+  if (!confirm('确定要清空所有历史记录吗？')) return;
+  localStorage.removeItem('douyin_analysis_history');
+  document.getElementById('historyList').innerHTML = '<div class="empty">暂无记录</div>';
+}
 renderHistory();
 </script>
 </body>
