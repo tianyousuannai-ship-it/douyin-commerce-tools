@@ -209,35 +209,66 @@
 </div>
 
 <script>
-// Analysis engine - combines heuristics with market knowledge patterns
-function analyze() {
+// Analysis engine - powered by DeepSeek AI with local fallback
+async function analyze() {
   const category = document.getElementById('category').value.trim();
-  if (!category) {
-    document.getElementById('category').focus();
-    return;
-  }
+  if (!category) { document.getElementById('category').focus(); return; }
 
-  const priceMin = parseInt(document.getElementById('priceMin').value) || 0;
-  const priceMax = parseInt(document.getElementById('priceMax').value) || 999;
-  const audience = document.getElementById('audience').value;
-  const commission = parseInt(document.getElementById('commission').value) || 20;
-  const notes = document.getElementById('notes').value.trim();
+  const input = {
+    category,
+    priceMin: parseInt(document.getElementById('priceMin').value) || 0,
+    priceMax: parseInt(document.getElementById('priceMax').value) || 999,
+    audience: document.getElementById('audience').value,
+    commission: parseInt(document.getElementById('commission').value) || 20,
+    notes: document.getElementById('notes').value.trim()
+  };
 
-  // Show loading
   document.getElementById('inputCard').style.display = 'none';
   document.getElementById('loading').classList.add('active');
   document.getElementById('result').classList.remove('active');
 
-  // Simulate analysis delay for UX
-  setTimeout(() => {
-    const result = runAnalysis(category, priceMin, priceMax, audience, commission, notes);
-    displayResult(result);
-    saveToHistory(result);
+  try {
+    const resp = await fetch('/api/analyze', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input)
+    });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+    displayAIResult(data, input);
+    saveToHistory({ ...data, category, time: new Date().toLocaleString('zh-CN') });
+  } catch (e) {
+    const r = runAnalysisLocal(category, input.priceMin, input.priceMax, input.audience, input.commission, input.notes);
+    displayResult(r); saveToHistory(r);
+  }
 
-    document.getElementById('loading').classList.remove('active');
-    document.getElementById('result').classList.add('active');
-  }, 1500);
+  document.getElementById('loading').classList.remove('active');
+  document.getElementById('result').classList.add('active');
 }
+
+function displayAIResult(data, input) {
+  const s = { market: data.marketScore, comp: data.compScore, profit: data.profitScore };
+  setScore('scoreMarket', s.market, '市场潜力');
+  setScore('scoreComp', s.comp, '竞争程度');
+  setScore('scoreProfit', s.profit, '利润空间');
+
+  let tagsHtml = '';
+  (data.tags || []).forEach(t => {
+    tagsHtml += '<span class="tag tag-blue">' + t + '</span>';
+  });
+  const verdict = data.overallVerdict || '谨慎评估';
+  if (verdict.includes('建议入手')) tagsHtml = '<span class="tag tag-green">建议入手</span>' + tagsHtml;
+  else if (verdict.includes('不建议')) tagsHtml = '<span class="tag tag-red">不太建议</span>' + tagsHtml;
+  else tagsHtml = '<span class="tag tag-yellow">谨慎评估</span>' + tagsHtml;
+  document.getElementById('verdictTags').innerHTML = tagsHtml;
+
+  document.getElementById('marketAnalysis').textContent = data.marketAnalysis || '';
+  document.getElementById('compAnalysis').textContent = data.compAnalysis || '';
+  document.getElementById('contentStrategy').innerHTML = '<ol style="padding-left:18px;line-height:1.8">' + (data.contentStrategy || []).map(s => '<li style="margin-bottom:4px">' + s + '</li>').join('') + '</ol>';
+  document.getElementById('riskWarning').innerHTML = '<ul style="padding-left:18px;line-height:1.8">' + (data.risks || []).map(r => '<li style="margin-bottom:4px;color:#cc2f26">' + r + '</li>').join('') + '</ul>';
+}
+
+// Fallback local analysis when API is unavailable
+function runAnalysisLocal(category, priceMin, priceMax, audience, commission, notes) {
 
 function runAnalysis(category, priceMin, priceMax, audience, commission, notes) {
   const avgPrice = (priceMin + priceMax) / 2;
