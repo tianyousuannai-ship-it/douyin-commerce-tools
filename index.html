@@ -3,62 +3,66 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>抖音选品分析</title>
+<title>选品分析 v2</title>
 <style>
+  :root {
+    --bg: #f5f5f7;
+    --card: #fff;
+    --primary: #0071e3;
+    --text: #1d1d1f;
+    --muted: #86868b;
+    --border: #d2d2d7;
+    --green: #34c759;
+    --orange: #ff9500;
+    --red: #ff3b30;
+    --blue: #005fcc;
+  }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: #f5f5f7;
-    color: #1d1d1f;
-    min-height: 100vh;
+    background: var(--bg); color: var(--text); min-height: 100vh;
   }
   .header {
-    background: #fff;
-    padding: 16px 20px;
-    border-bottom: 1px solid #e5e5e7;
-    position: sticky; top: 0; z-index: 10;
+    background: var(--card); padding: 20px 24px;
+    border-bottom: 1px solid #e5e5e7; position: sticky; top: 0; z-index: 10;
   }
-  .header h1 { font-size: 18px; font-weight: 600; }
-  .header p { font-size: 13px; color: #86868b; margin-top: 2px; }
+  .header h1 { font-size: 20px; font-weight: 700; }
+  .header p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .header p a { color: var(--primary); text-decoration: none; font-weight: 500; }
 
-  .container { max-width: 640px; margin: 0 auto; padding: 16px; }
+  .container { max-width: 700px; margin: 0 auto; padding: 16px; }
 
   .card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    background: var(--card); border-radius: 14px; padding: 24px;
+    margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
   .card-label {
-    font-size: 13px; font-weight: 600; color: #86868b;
-    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
+    font-size: 12px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;
   }
 
   .input-group { margin-bottom: 14px; }
   .input-group:last-child { margin-bottom: 0; }
   .input-group label {
-    display: block; font-size: 14px; font-weight: 500;
-    color: #1d1d1f; margin-bottom: 6px;
+    display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px;
   }
   .input-group input, .input-group select, .input-group textarea {
-    width: 100%; padding: 10px 12px; border: 1px solid #d2d2d7;
-    border-radius: 8px; font-size: 15px; font-family: inherit;
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: 14px; font-family: inherit;
     background: #fafafa; transition: border-color 0.15s;
   }
   .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
-    outline: none; border-color: #0071e3; background: #fff;
+    outline: none; border-color: var(--primary); background: var(--card);
   }
-  .input-group textarea { min-height: 80px; resize: vertical; }
+  .input-group textarea { min-height: 70px; resize: vertical; }
 
   .row { display: flex; gap: 12px; }
   .row .input-group { flex: 1; }
 
   .btn {
-    width: 100%; padding: 13px; border: none; border-radius: 10px;
-    font-size: 16px; font-weight: 600; cursor: pointer;
-    background: #0071e3; color: #fff;
-    transition: opacity 0.15s;
+    width: 100%; padding: 14px; border: none; border-radius: 10px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    background: var(--primary); color: var(--card); transition: opacity 0.15s;
   }
   .btn:active { opacity: 0.8; }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -66,27 +70,41 @@
   .result { display: none; }
   .result.active { display: block; }
 
-  .score-row {
-    display: flex; gap: 12px; margin-bottom: 20px;
+  /* Radar chart */
+  .radar-container {
+    display: flex; justify-content: center; align-items: center;
+    padding: 10px 0;
+  }
+  canvas#radarChart {
+    width: 240px; height: 240px;
+  }
+
+  /* Score grid */
+  .score-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px;
   }
   .score-box {
-    flex: 1; text-align: center; padding: 14px 8px;
+    text-align: center; padding: 14px 6px;
     border-radius: 10px; background: #f5f5f7;
   }
-  .score-box .num { font-size: 28px; font-weight: 700; }
-  .score-box .lbl { font-size: 12px; color: #86868b; margin-top: 2px; }
-  .score-box.high .num { color: #34c759; }
-  .score-box.mid .num { color: #ff9500; }
-  .score-box.low .num { color: #ff3b30; }
+  .score-box .num { font-size: 24px; font-weight: 700; }
+  .score-box .lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .score-box.high .num { color: var(--green); }
+  .score-box.mid .num { color: var(--orange); }
+  .score-box.low .num { color: var(--red); }
 
-  .section { margin-bottom: 16px; }
-  .section:last-child { margin-bottom: 0; }
-  .section-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #1d1d1f; }
-  .section-text { font-size: 14px; line-height: 1.7; color: #3a3a3c; }
+  .verdict-bar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; border-radius: 10px; background: #f5f5f7; margin-bottom: 16px;
+  }
+  .verdict-bar .score-big { font-size: 36px; font-weight: 800; }
+  .verdict-bar .meta { flex: 1; }
+  .verdict-bar .meta .verdict-text { font-size: 16px; font-weight: 600; }
+  .verdict-bar .meta .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-  .tag-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
   .tag {
-    display: inline-block; padding: 5px 10px; border-radius: 6px;
+    display: inline-block; padding: 4px 10px; border-radius: 6px;
     font-size: 12px; font-weight: 500;
   }
   .tag-green { background: #e8f8ed; color: #1a7f3a; }
@@ -94,45 +112,109 @@
   .tag-yellow { background: #fff3d6; color: #b06d00; }
   .tag-blue { background: #e6f0ff; color: #005fcc; }
 
-  .loading { display: none; text-align: center; padding: 40px 0; }
+  /* Dimension analysis */
+  .dim-list { display: flex; flex-direction: column; gap: 14px; }
+  .dim-item {
+    padding: 14px; border-radius: 10px; background: #fafafa;
+    border-left: 3px solid var(--primary);
+  }
+  .dim-item .dim-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+  }
+  .dim-item .dim-name { font-size: 14px; font-weight: 600; }
+  .dim-item .dim-score {
+    font-size: 13px; font-weight: 700; padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .dim-item .dim-score.high { background: #e8f8ed; color: #1a7f3a; }
+  .dim-item .dim-score.mid { background: #fff3d6; color: #b06d00; }
+  .dim-item .dim-score.low { background: #ffe8e6; color: #cc2f26; }
+  .dim-item .dim-summary { font-size: 13px; color: #3a3a3c; line-height: 1.6; }
+  .dim-item .dim-factors {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;
+  }
+  .dim-item .dim-factors span {
+    font-size: 11px; padding: 3px 8px; border-radius: 4px;
+    background: #e6f0ff; color: var(--blue);
+  }
+  .dim-item .dim-detail { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  .section-title {
+    font-size: 14px; font-weight: 600; margin-bottom: 10px;
+  }
+
+  .strategy-list { padding-left: 16px; }
+  .strategy-list li {
+    font-size: 13px; line-height: 1.8; margin-bottom: 6px;
+    color: #3a3a3c;
+  }
+
+  .risk-item {
+    padding: 10px 12px; border-radius: 8px; margin-bottom: 8px;
+    border-left: 3px solid var(--red); background: #fff5f5;
+  }
+  .risk-item .risk-desc { font-size: 13px; font-weight: 500; color: #cc2f26; }
+  .risk-item .risk-severity {
+    display: inline-block; font-size: 11px; padding: 1px 6px;
+    border-radius: 3px; margin: 4px 0;
+  }
+  .risk-item .risk-mitigation { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  .market-refs {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px;
+  }
+  .market-ref-item {
+    padding: 10px; border-radius: 8px; background: #f5f5f7; text-align: center;
+  }
+  .market-ref-item .ref-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .market-ref-item .ref-value { font-size: 13px; font-weight: 600; }
+
+  .loading { display: none; text-align: center; padding: 50px 0; }
   .loading.active { display: block; }
   .spinner {
-    width: 32px; height: 32px; border: 3px solid #e5e5e7;
-    border-top-color: #0071e3; border-radius: 50%;
-    animation: spin 0.6s linear infinite; margin: 0 auto 12px;
+    width: 36px; height: 36px; border: 3px solid #e5e5e7;
+    border-top-color: var(--primary); border-radius: 50%;
+    animation: spin 0.6s linear infinite; margin: 0 auto 14px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { font-size: 14px; color: #86868b; }
+  .loading-text { font-size: 14px; color: var(--muted); }
 
   .history-item {
     padding: 10px 0; border-bottom: 1px solid #f0f0f2;
-    cursor: pointer; font-size: 14px;
+    cursor: pointer; font-size: 13px;
     display: flex; align-items: center; justify-content: space-between;
   }
   .history-item:last-child { border-bottom: none; }
   .history-item .name { font-weight: 500; }
   .history-item .info { flex: 1; min-width: 0; }
-  .history-item .meta { font-size: 12px; color: #86868b; }
+  .history-item .meta { font-size: 11px; color: var(--muted); }
   .delete-btn {
     width: 28px; height: 28px; border: none; border-radius: 6px;
-    background: transparent; color: #86868b; font-size: 18px;
+    background: transparent; color: var(--muted); font-size: 18px;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
     flex-shrink: 0; margin-left: 8px; transition: all 0.15s;
   }
-  .delete-btn:hover { background: #ffe8e6; color: #ff3b30; }
+  .delete-btn:hover { background: #ffe8e6; color: var(--red); }
   .clear-all {
-    font-size: 12px; color: #ff3b30; cursor: pointer; float: right;
+    font-size: 12px; color: var(--red); cursor: pointer; float: right;
     background: none; border: none; font-weight: 500;
   }
+  .empty { text-align: center; padding: 30px 0; color: var(--muted); font-size: 13px; }
 
-  .empty { text-align: center; padding: 32px 0; color: #86868b; font-size: 14px; }
+  @media (max-width: 480px) {
+    .score-grid { grid-template-columns: 1fr 1fr; }
+    .market-refs { grid-template-columns: 1fr; }
+    .header { padding: 14px 16px; }
+    .card { padding: 16px; }
+    .container { padding: 12px; }
+  }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>选品分析工具</h1>
-  <p>输入商品信息，AI 帮你判断带货潜力 · <a href="cover-generator.html" style="color:#0071e3;text-decoration:none;font-weight:500;">封面生成器 →</a></p>
+  <h1>选品分析 v2</h1>
+  <p>多维度AI选品诊断 · <a href="cover-generator.html">封面生成器 →</a></p>
 </div>
 
 <div class="container">
@@ -140,18 +222,22 @@
   <div class="card" id="inputCard">
     <div class="card-label">商品信息</div>
     <div class="input-group">
-      <label>商品品类</label>
-      <input type="text" id="category" placeholder="例如：厨房小家电、母婴用品、美妆">
+      <label>商品品类 *</label>
+      <input type="text" id="category" placeholder="例如：宠物猫粮、厨房小家电、母婴玩具">
     </div>
     <div class="row">
       <div class="input-group">
-        <label>预估售价 (元)</label>
+        <label>最低售价 (元)</label>
         <input type="number" id="priceMin" placeholder="最低" value="29">
       </div>
       <div class="input-group">
-        <label style="visibility:hidden">-</label>
+        <label>最高售价 (元)</label>
         <input type="number" id="priceMax" placeholder="最高" value="199">
       </div>
+    </div>
+    <div class="input-group">
+      <label>佣金比例 (%)</label>
+      <input type="number" id="commission" placeholder="例如：20" value="20" min="1" max="80">
     </div>
     <div class="input-group">
       <label>目标人群</label>
@@ -163,13 +249,46 @@
         <option value="全年龄段">全年龄段</option>
       </select>
     </div>
-    <div class="input-group">
-      <label>佣金比例 (%)</label>
-      <input type="number" id="commission" placeholder="例如：20" value="20" min="1" max="80">
+    <div class="row">
+      <div class="input-group">
+        <label>季节性</label>
+        <select id="season">
+          <option value="无明显季节性">无明显季节性</option>
+          <option value="夏季旺季">夏季旺季</option>
+          <option value="冬季旺季">冬季旺季</option>
+          <option value="节假日旺季（年货/中秋等）">节假日旺季（年货/中秋等）</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>竞品强度</label>
+        <select id="competitorLevel">
+          <option value="未知">未知</option>
+          <option value="竞争激烈（有大品牌/头部达人）">竞争激烈（有大品牌/头部达人）</option>
+          <option value="竞争中等">竞争中等</option>
+          <option value="竞争较小">竞争较小</option>
+          <option value="几乎没有竞品">几乎没有竞品</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="input-group">
+        <label>供应链情况</label>
+        <select id="supplyChain">
+          <option value="未填写">请选择</option>
+          <option value="自有工厂/源头">自有工厂/源头</option>
+          <option value="稳定合作工厂">稳定合作工厂</option>
+          <option value="1688采购">1688采购</option>
+          <option value="代理/分销">代理/分销</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>预估月销 (件)</label>
+        <input type="text" id="monthlySales" placeholder="例如：500-1000" value="">
+      </div>
     </div>
     <div class="input-group">
       <label>补充说明（选填）</label>
-      <textarea id="notes" placeholder="商品特点、竞品情况、供应链优势等..."></textarea>
+      <textarea id="notes" placeholder="产品核心卖点、差异化优势、目前已经有的达人合作情况等..."></textarea>
     </div>
     <button class="btn" id="analyzeBtn" onclick="analyze()">开始分析</button>
   </div>
@@ -177,41 +296,47 @@
   <!-- Loading -->
   <div class="loading" id="loading">
     <div class="spinner"></div>
-    <div class="loading-text">AI 分析中...</div>
+    <div class="loading-text">AI 多维度分析中...</div>
   </div>
 
   <!-- Result -->
   <div class="result" id="result">
+    <!-- 综合评分 -->
     <div class="card">
-      <div class="card-label">综合评分</div>
-      <div class="score-row">
-        <div class="score-box" id="scoreMarket"><div class="num">-</div><div class="lbl">市场潜力</div></div>
-        <div class="score-box" id="scoreComp"><div class="num">-</div><div class="lbl">竞争程度</div></div>
-        <div class="score-box" id="scoreProfit"><div class="num">-</div><div class="lbl">利润空间</div></div>
-      </div>
+      <div class="card-label">综合诊断</div>
+      <div class="verdict-bar" id="verdictBar"></div>
       <div class="tag-row" id="verdictTags"></div>
+      <div class="score-grid" id="scoreGrid"></div>
+      <div class="radar-container">
+        <canvas id="radarChart" width="240" height="240"></canvas>
+      </div>
     </div>
 
+    <!-- 维度详解 -->
+    <div class="card" id="dimCard">
+      <div class="card-label">维度分析</div>
+      <div class="dim-list" id="dimList"></div>
+    </div>
+
+    <!-- 市场参考 -->
+    <div class="card" id="marketRefCard" style="display:none">
+      <div class="card-label">市场参考</div>
+      <div class="market-refs" id="marketRefs"></div>
+    </div>
+
+    <!-- 内容策略 -->
     <div class="card">
-      <div class="section">
-        <div class="section-title">市场分析</div>
-        <div class="section-text" id="marketAnalysis"></div>
-      </div>
-      <div class="section">
-        <div class="section-title">竞争格局</div>
-        <div class="section-text" id="compAnalysis"></div>
-      </div>
-      <div class="section">
-        <div class="section-title">内容策略建议</div>
-        <div class="section-text" id="contentStrategy"></div>
-      </div>
-      <div class="section">
-        <div class="section-title">风险提示</div>
-        <div class="section-text" id="riskWarning"></div>
-      </div>
+      <div class="section-title">内容策略建议</div>
+      <ol class="strategy-list" id="strategyList"></ol>
     </div>
 
-    <button class="btn" onclick="resetForm()" style="background:#f5f5f7;color:#1d1d1f;">分析下一个</button>
+    <!-- 风险提示 -->
+    <div class="card">
+      <div class="section-title">风险提示</div>
+      <div id="riskList"></div>
+    </div>
+
+    <button class="btn" onclick="resetForm()" style="background:#f5f5f7;color:var(--text);margin-top:8px;">分析下一个</button>
   </div>
 
   <!-- History -->
@@ -222,7 +347,73 @@
 </div>
 
 <script>
-// Analysis engine - powered by DeepSeek AI with local fallback
+// ========== 雷达图 ==========
+function drawRadar(scores) {
+  const canvas = document.getElementById('radarChart');
+  const ctx = canvas.getContext('2d');
+  const W = 240, H = 240, cx = 120, cy = 120, r = 90;
+  ctx.clearRect(0, 0, W, H);
+
+  const labels = ['市场热度', '竞争强度', '利润空间', '趋势走向', '内容适配', '供应链'];
+  const dims = ['marketHeat', 'competition', 'profit', 'trend', 'contentFit', 'supplyChain'];
+  const n = dims.length;
+  const values = dims.map(d => Math.max(5, Math.min(100, scores[d] || 50)));
+
+  // Helper: polar to cartesian
+  function pt(i, radius) {
+    const angle = (Math.PI * 2 * i) / n - Math.PI / 2;
+    return { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
+  }
+
+  // Background grid (3 levels)
+  ctx.strokeStyle = '#e5e5e7';
+  ctx.lineWidth = 1;
+  for (let level = 1; level <= 3; level++) {
+    const radius = (r / 3) * level;
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const p = pt(i % n, radius);
+      i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+  }
+  // Axis lines
+  for (let i = 0; i < n; i++) {
+    const p = pt(i, r);
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(p.x, p.y); ctx.stroke();
+  }
+  // Labels
+  ctx.fillStyle = '#86868b'; ctx.font = '11px -apple-system, sans-serif'; ctx.textAlign = 'center';
+  for (let i = 0; i < n; i++) {
+    const p = pt(i, r + 18);
+    ctx.fillText(labels[i], p.x, p.y + 4);
+  }
+
+  // Data polygon
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const radius = (values[i % n] / 100) * r;
+    const p = pt(i % n, radius);
+    i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+  }
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(0, 113, 227, 0.15)';
+  ctx.fill();
+  ctx.strokeStyle = '#0071e3';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Points
+  for (let i = 0; i < n; i++) {
+    const radius = (values[i] / 100) * r;
+    const p = pt(i, radius);
+    ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#0071e3'; ctx.fill();
+  }
+}
+
+// ========== 核心分析函数 ==========
 async function analyze() {
   const category = document.getElementById('category').value.trim();
   if (!category) { document.getElementById('category').focus(); return; }
@@ -233,6 +424,10 @@ async function analyze() {
     priceMax: parseInt(document.getElementById('priceMax').value) || 999,
     audience: document.getElementById('audience').value,
     commission: parseInt(document.getElementById('commission').value) || 20,
+    season: document.getElementById('season').value,
+    competitorLevel: document.getElementById('competitorLevel').value,
+    supplyChain: document.getElementById('supplyChain').value,
+    monthlySales: document.getElementById('monthlySales').value.trim(),
     notes: document.getElementById('notes').value.trim()
   };
 
@@ -248,173 +443,320 @@ async function analyze() {
     });
     const data = await resp.json();
     if (data.error) throw new Error(data.error);
-    displayAIResult(data, input);
-    saveToHistory({ ...data, category, time: new Date().toLocaleString('zh-CN') });
+    displayResult(data, input);
+    saveToHistory(data, input);
   } catch (e) {
-    const r = runAnalysisLocal(category, input.priceMin, input.priceMax, input.audience, input.commission, input.notes);
-    displayResult(r); saveToHistory(r);
+    console.log('API failed, using local fallback:', e.message);
+    const r = localAnalysis(input);
+    displayResult(r, input);
+    saveToHistory(r, input);
   }
 
   document.getElementById('loading').classList.remove('active');
   document.getElementById('result').classList.add('active');
 }
 
-function displayAIResult(data, input) {
-  const s = { market: data.marketScore, comp: data.compScore, profit: data.profitScore };
-  setScore('scoreMarket', s.market, '市场潜力');
-  setScore('scoreComp', s.comp, '竞争程度');
-  setScore('scoreProfit', s.profit, '利润空间');
+// ========== 结果展示 ==========
+function displayResult(data, input) {
+  const scores = data.scores || {};
 
-  let tagsHtml = '';
-  (data.tags || []).forEach(t => {
-    tagsHtml += '<span class="tag tag-blue">' + t + '</span>';
-  });
-  const verdict = data.overallVerdict || '谨慎评估';
-  if (verdict.includes('建议入手')) tagsHtml = '<span class="tag tag-green">建议入手</span>' + tagsHtml;
-  else if (verdict.includes('不建议')) tagsHtml = '<span class="tag tag-red">不太建议</span>' + tagsHtml;
-  else tagsHtml = '<span class="tag tag-yellow">谨慎评估</span>' + tagsHtml;
-  document.getElementById('verdictTags').innerHTML = tagsHtml;
+  // 综合评分条
+  const total = data.overall?.totalScore || Math.round(
+    (scores.marketHeat || 50) +
+    0 +  // competition is inverted
+    (scores.profit || 50) +
+    (scores.trend || 50) +
+    (scores.contentFit || 50) +
+    (scores.supplyChain || 50)
+  ) / 6 * 1;
+  const finalScore = Math.round(total);
+  const verdict = data.overall?.verdict || (finalScore >= 70 ? '建议入手' : finalScore >= 45 ? '谨慎评估' : '不太建议');
+  const recommendation = data.overall?.recommendedAction || '';
+  const riskLevel = data.overall?.riskLevel || '中';
 
-  document.getElementById('marketAnalysis').textContent = data.marketAnalysis || '';
-  document.getElementById('compAnalysis').textContent = data.compAnalysis || '';
-  document.getElementById('contentStrategy').innerHTML = '<ol style="padding-left:18px;line-height:1.8">' + (data.contentStrategy || []).map(s => '<li style="margin-bottom:4px">' + s + '</li>').join('') + '</ol>';
-  document.getElementById('riskWarning').innerHTML = '<ul style="padding-left:18px;line-height:1.8">' + (data.risks || []).map(r => '<li style="margin-bottom:4px;color:#cc2f26">' + r + '</li>').join('') + '</ul>';
+  document.getElementById('verdictBar').innerHTML = `
+    <div class="score-big" style="color:${finalScore >= 70 ? '#34c759' : finalScore >= 45 ? '#ff9500' : '#ff3b30'}">${finalScore}</div>
+    <div class="meta">
+      <div class="verdict-text">${verdict}</div>
+      <div class="sub">${recommendation}</div>
+    </div>
+    <div class="tag ${riskLevel === '低' ? 'tag-green' : riskLevel === '高' ? 'tag-red' : 'tag-yellow'}">风险${riskLevel}</div>
+  `;
+
+  // 标签
+  const tags = data.tags || [];
+  document.getElementById('verdictTags').innerHTML = tags.map(t =>
+    `<span class="tag tag-blue">${t}</span>`
+  ).join('') + `<span class="tag ${verdict.includes('建议入手') ? 'tag-green' : verdict.includes('不建议') ? 'tag-red' : 'tag-yellow'}">${verdict}</span>`;
+
+  // 六维评分网格
+  const dimMap = [
+    { key: 'marketHeat', label: '市场热度' },
+    { key: 'competition', label: '竞争强度' },
+    { key: 'profit', label: '利润空间' },
+    { key: 'trend', label: '趋势走向' },
+    { key: 'contentFit', label: '内容适配' },
+    { key: 'supplyChain', label: '供应链' }
+  ];
+  document.getElementById('scoreGrid').innerHTML = dimMap.map(d => {
+    const val = scores[d.key] || 50;
+    return `<div class="score-box ${val >= 70 ? 'high' : val >= 40 ? 'mid' : 'low'}">
+      <div class="num">${val}</div>
+      <div class="lbl">${d.label}</div>
+    </div>`;
+  }).join('');
+
+  // 雷达图
+  drawRadar(scores);
+
+  // 维度分析详情
+  const dimAnalysis = data.dimensionAnalysis || {};
+  const dimDetailKeys = ['marketHeat', 'competition', 'profit', 'trend', 'contentFit', 'supplyChain'];
+  const dimNames = { marketHeat: '市场热度', competition: '竞争格局', profit: '利润空间', trend: '趋势走向', contentFit: '内容适配度', supplyChain: '供应链评估' };
+
+  document.getElementById('dimList').innerHTML = dimDetailKeys.map(key => {
+    const d = dimAnalysis[key] || {};
+    const val = d.score || scores[key] || 50;
+    let details = '';
+    if (d.entryBarrier) details += `<div class="dim-detail">进入门槛：${d.entryBarrier}</div>`;
+    if (d.differentiation) details += `<div class="dim-detail">差异化：${d.differentiation}</div>`;
+    if (d.contentType) details += `<div class="dim-detail">推荐形式：${d.contentType}</div>`;
+    if (d.difficulty) details += `<div class="dim-detail">制作难度：${d.difficulty}</div>`;
+    if (d.roiEstimate) details += `<div class="dim-detail">预估ROI：${d.roiEstimate}</div>`;
+    if (d.breakEven) details += `<div class="dim-detail">回本周期：${d.breakEven}</div>`;
+    if (d.direction) details += `<div class="dim-detail">趋势方向：${d.direction}</div>`;
+    if (d.seasonality) details += `<div class="dim-detail">季节性：${d.seasonality}</div>`;
+
+    const factors = d.factors || [];
+    const factorsHtml = factors.length ? `<div class="dim-factors">${factors.map(f => `<span>${f}</span>`).join('')}</div>` : '';
+
+    return `<div class="dim-item">
+      <div class="dim-header">
+        <div class="dim-name">${dimNames[key]}</div>
+        <div class="dim-score ${val >= 70 ? 'high' : val >= 40 ? 'mid' : 'low'}">${val}分</div>
+      </div>
+      <div class="dim-summary">${d.summary || ''}</div>
+      ${factorsHtml}
+      ${details}
+    </div>`;
+  }).join('');
+
+  // 市场参考
+  const refs = data.marketRefs || {};
+  const refKeys = [
+    { key: 'similarProducts', label: '同类产品参考' },
+    { key: 'priceRange', label: '主流价格带' },
+    { key: 'targetGMV', label: '预估月GMV' }
+  ];
+  const hasRefs = refKeys.some(r => refs[r.key]);
+  if (hasRefs) {
+    document.getElementById('marketRefCard').style.display = 'block';
+    document.getElementById('marketRefs').innerHTML = refKeys.map(r =>
+      `<div class="market-ref-item"><div class="ref-label">${r.label}</div><div class="ref-value">${refs[r.key] || '-'}</div></div>`
+    ).join('');
+  }
+
+  // 内容策略
+  const strategies = data.contentStrategy || [];
+  document.getElementById('strategyList').innerHTML = strategies.map(s =>
+    `<li>${s}</li>`
+  ).join('');
+
+  // 风险提示
+  const risks = data.risks || [];
+  document.getElementById('riskList').innerHTML = risks.map(r => {
+    const riskText = typeof r === 'string' ? r : r.risk || '';
+    const severity = typeof r === 'string' ? '中' : r.severity || '中';
+    const mitigation = typeof r === 'string' ? '' : r.mitigation || '';
+    return `<div class="risk-item">
+      <div class="risk-desc">${riskText}</div>
+      <span class="risk-severity" style="background:${severity === '高' ? '#ffe8e6;color:#cc2f26' : severity === '低' ? '#e8f8ed;color:#1a7f3a' : '#fff3d6;color:#b06d00'}">${severity}风险</span>
+      ${mitigation ? `<div class="risk-mitigation">应对：${mitigation}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Fallback local analysis when API is unavailable
-function runAnalysisLocal(category, priceMin, priceMax, audience, commission, notes) {
+// ========== 本地 Fallback 算法 ==========
+function localAnalysis(input) {
+  const { category, priceMin, priceMax, audience, commission, season, competitorLevel, supplyChain, notes } = input;
   const avgPrice = (priceMin + priceMax) / 2;
   const cat = category.toLowerCase();
+  const catText = cat;
 
-  // Market potential scoring
-  let marketScore = 60;
-  if (cat.includes('母婴') || cat.includes('美妆') || cat.includes('护肤')) marketScore += 20;
-  if (cat.includes('家居') || cat.includes('厨房') || cat.includes('日用')) marketScore += 15;
-  if (cat.includes('服装') || cat.includes('饰品')) marketScore += 10;
-  if (cat.includes('数码') || cat.includes('3c')) marketScore += 5;
-  if (audience.includes('女性') && audience.includes('25-40')) marketScore += 10;
-  if (audience.includes('中老年')) marketScore -= 5;
-  if (avgPrice >= 30 && avgPrice <= 200) marketScore += 10;
-  if (avgPrice > 300) marketScore -= 10;
-  if (commission >= 30) marketScore += 5;
-  marketScore = Math.min(98, Math.max(10, marketScore));
+  // ---- 市场热度 ----
+  let marketHeat = 55;
+  // 高热度品类
+  const hotCats = ['美妆', '护肤', '母婴', '宠物', '食品', '零食', '女装', '日用', '家居'];
+  if (hotCats.some(h => catText.includes(h))) marketHeat += 20;
+  // 中热度品类
+  const midCats = ['男装', '数码', '3c', '家电', '厨具', '汽车', '户外', '运动'];
+  if (midCats.some(m => catText.includes(m))) marketHeat += 10;
+  // 人群加成
+  if (audience.includes('女性') && audience.includes('25-40')) marketHeat += 8;
+  if (audience.includes('全年龄段')) marketHeat += 5;
+  // 价格带影响
+  if (avgPrice >= 20 && avgPrice <= 150) marketHeat += 10; // 冲动消费价格带
+  if (avgPrice > 300) marketHeat -= 8;
+  // 季节性加成
+  if (season.includes('旺季')) marketHeat += 10;
+  marketHeat = Math.min(98, Math.max(10, marketHeat));
 
-  // Competition scoring (lower = less competition = better)
-  let compScore = 50;
-  if (cat.includes('美妆') || cat.includes('服装')) compScore += 25;
-  if (cat.includes('母婴')) compScore += 15;
-  if (cat.includes('数码')) compScore += 20;
-  if (cat.includes('家居') && (cat.includes('小众') || cat.includes('创意'))) compScore -= 15;
-  if (cat.includes('日用')) compScore += 10;
-  if (avgPrice < 20) compScore += 15;
-  if (avgPrice > 300) compScore -= 10;
-  if (notes.includes('独家') || notes.includes('自有') || notes.includes('工厂')) compScore -= 20;
-  compScore = Math.min(95, Math.max(5, compScore));
+  // ---- 竞争强度 ----
+  let competition = 50;
+  if (competitorLevel === '竞争激烈（有大品牌/头部达人）') competition += 25;
+  else if (competitorLevel === '竞争中等') competition += 10;
+  else if (competitorLevel === '竞争较小') competition -= 15;
+  else if (competitorLevel === '几乎没有竞品') competition -= 25;
+  // 品类默认竞争
+  if (['美妆', '女装', '食品', '零食', '护肤'].some(c => catText.includes(c))) competition += 20;
+  if (['宠物', '母婴', '家居', '日用'].some(c => catText.includes(c))) competition += 10;
+  // 低客单价竞争更激烈
+  if (avgPrice < 20) competition += 15;
+  if (avgPrice > 300) competition -= 10;
+  // 供应链优势降低竞争分
+  if (supplyChain === '自有工厂/源头' || supplyChain === '稳定合作工厂') competition -= 15;
+  if (notes.includes('独家') || notes.includes('专利') || notes.includes('自有品牌')) competition -= 15;
+  competition = Math.min(95, Math.max(5, competition));
 
-  // Profit scoring
-  let profitScore = 50;
-  if (commission >= 30) profitScore += 20;
-  else if (commission >= 20) profitScore += 10;
-  if (avgPrice >= 50 && avgPrice <= 200) profitScore += 15;
-  if (avgPrice > 200) profitScore += 20;
-  if (avgPrice < 20) profitScore -= 15;
-  if (notes.includes('工厂') || notes.includes('源头')) profitScore += 10;
-  profitScore = Math.min(98, Math.max(5, profitScore));
+  // ---- 利润空间 ----
+  let profit = 50;
+  if (commission >= 30) profit += 20;
+  else if (commission >= 20) profit += 12;
+  else if (commission >= 15) profit += 5;
+  if (avgPrice >= 50 && avgPrice <= 200) profit += 12;
+  else if (avgPrice > 200 && avgPrice <= 500) profit += 18;
+  else if (avgPrice > 500) profit += 22; // 高客单毛利高
+  else if (avgPrice < 20) profit -= 15;
+  if (supplyChain === '自有工厂/源头') profit += 15;
+  else if (supplyChain === '稳定合作工厂') profit += 8;
+  if (notes.includes('工厂') || notes.includes('源头') || notes.includes('自有')) profit += 8;
+  profit = Math.min(98, Math.max(5, profit));
 
-  // Market analysis text
-  const marketTexts = {
-    high: `${category}在抖音属于高热度赛道，用户需求旺盛，内容消费量大。${audience.includes('女性') ? '女性用户的购买决策较快，冲动消费占比高，适合短视频+直播组合打法。' : '建议通过场景化内容建立信任，配合限时优惠促进转化。'}在${priceMin}-${priceMax}元价格带，用户决策门槛较低，转化效率高。`,
-    mid: `${category}在抖音有稳定的市场需求，属于成熟品类。竞争虽激烈但天花板也高。关键在差异化——要么价格有优势，要么内容有看点。${avgPrice > 100 ? '客单价偏高，需要更强的信任背书，建议通过测评、对比类内容建立专业形象。' : '客单价适中，适合走量，可通过高频直播提升转化。'}`,
-    low: `${category}属于抖音上的长尾品类，搜索量不高但竞争较小。如果你是第一个在该细分做出声量的账号，有机会抢占心智。缺点是教育用户成本较高，需要耐心做内容积累。`
-  };
+  // ---- 趋势走向 ----
+  let trend = 55;
+  if (season.includes('旺季')) trend += 15;
+  else if (season.includes('无明显季节性')) trend += 3;
+  // 上升品类
+  const risingCats = ['宠物', '美妆工具', '个护', '健康', '户外', '露营', '预制菜'];
+  if (risingCats.some(r => catText.includes(r))) trend += 12;
+  // 下滑品类
+  const fallingCats = ['口罩', '消毒', '防护'];
+  if (fallingCats.some(f => catText.includes(f))) trend -= 15;
+  // 受众年轻化加分
+  if (audience.includes('18-25')) trend += 8;
+  // 供应链稳定加分
+  if (supplyChain === '自有工厂/源头' || supplyChain === '稳定合作工厂') trend += 5;
+  trend = Math.min(98, Math.max(5, trend));
 
-  let marketLevel = marketScore >= 75 ? 'high' : marketScore >= 50 ? 'mid' : 'low';
-  let marketText = marketTexts[marketLevel];
+  // ---- 内容适配度 ----
+  let contentFit = 55;
+  const visualCats = ['美妆', '护肤', '服装', '饰品', '宠物', '食品', '家居', '玩具'];
+  if (visualCats.some(v => catText.includes(v))) contentFit += 20;
+  const demoCats = ['数码', '家电', '厨具', '工具', '3c'];
+  if (demoCats.some(d => catText.includes(d))) contentFit += 15;
+  const lowContentCats = ['建材', '工业', '原材料', '服务'];
+  if (lowContentCats.some(l => catText.includes(l))) contentFit -= 15;
+  // 细分人群有利于内容精准触达
+  if (!audience.includes('全年龄段')) contentFit += 8;
+  contentFit = Math.min(98, Math.max(5, contentFit));
 
-  // Competition text
-  const compLevel = compScore >= 70 ? '高' : compScore >= 40 ? '中' : '低';
-  let compText = compLevel === '高'
-    ? `头部账号集中，新入局需要强内容能力。建议细分切入点——比如${category}中某个特定场景或特定人群，做垂直深耕。可利用供应链优势打价格差。`
-    : compLevel === '中'
-    ? `竞争适度，有发挥空间。${compScore >= 50 ? '头部已有几个大号但格局未定，用差异化内容+稳定直播节奏可以撕开口子。' : '市场相对分散，找准定位后容易突围。'}`
-    : `蓝海市场，竞争压力小。先发优势明显，快速铺量做内容矩阵。同时验证供应链稳定性和复购率。`;
+  // ---- 供应链评估 ----
+  let supplyChainScore = 50;
+  if (supplyChain === '自有工厂/源头') supplyChainScore += 25;
+  else if (supplyChain === '稳定合作工厂') supplyChainScore += 15;
+  else if (supplyChain === '1688采购') supplyChainScore += 5;
+  else if (supplyChain === '代理/分销') supplyChainScore -= 5;
+  if (notes.includes('独家') || notes.includes('专利')) supplyChainScore += 15;
+  if (notes.includes('工厂') || notes.includes('源头')) supplyChainScore += 10;
+  if (avgPrice > 100) supplyChainScore += 5;
+  supplyChainScore = Math.min(98, Math.max(5, supplyChainScore));
 
-  // Content strategy
+  // ---- 综合计算 ----
+  const effectiveComp = 100 - competition;
+  const totalScore = Math.round(
+    (marketHeat * 0.2) +
+    (effectiveComp * 0.2) +
+    (profit * 0.2) +
+    (trend * 0.15) +
+    (contentFit * 0.15) +
+    (supplyChainScore * 0.1)
+  );
+
+  const verdict = totalScore >= 70 ? '建议入手' : totalScore >= 45 ? '谨慎评估' : '不太建议';
+
+  // ---- 市场分析文本 ----
+  const marketText = marketHeat >= 70
+    ? `${category}在抖音属于高热度赛道，内容消费量大，用户需求旺盛。`
+    : marketHeat >= 45
+    ? `${category}在抖音有稳定市场需求，属于成熟品类。`
+    : `${category}在抖音属于长尾品类，搜索量不高但竞争较小。`;
+
+  const compText = competition >= 65
+    ? `竞争相对激烈，建议走差异化路线`
+    : competition >= 35
+    ? `竞争适中，有发挥空间`
+    : `蓝海市场，先发优势明显`;
+
+  // ---- 内容策略 ----
   const strategies = [
-    `开箱测评类内容，突出产品亮点和性价比`,
-    `使用场景还原，用${audience.includes('女性') ? '宝妈/职场女性的真实痛点' : '日常生活场景'}引发共鸣`,
-    `对比测评（同类产品横向比较），建立专业信任`,
-    `限时优惠+赠品策略，刺激冲动下单`,
-    `固定时间直播，培养粉丝观看习惯`,
-    `评论区互动引导，提升视频完播率和互动率`
+    `开箱/测评内容，突出${category}的核心亮点和性价比`,
+    `场景化种草，用${audience.includes('女性') ? '宝妈/职场女性的真实痛点' : '目标用户的日常场景'}引发共鸣`,
+    `对比测评同品类产品，建立专业信任感`,
+    `限时优惠+赠品策略，刺激冲动消费`,
+    `固定时间直播，培养粉丝观看习惯`
   ];
 
-  // Risk
-  let risks = [];
-  if (compScore >= 75) risks.push('竞争激烈，起号周期可能较长');
-  if (avgPrice < 20) risks.push('低客单价需要走量，退货率可能偏高');
-  if (avgPrice > 300) risks.push('高客单价转化周期长，需耐心积累信任');
-  if (commission < 15) risks.push('佣金比例偏低，ROI 回收压力大');
-  if (!cat.includes('母婴') && !cat.includes('美妆') && !cat.includes('护肤') && !cat.includes('家居')) {
-    risks.push('品类热度中等，需测试内容方向的接受度');
-  }
-  if (risks.length === 0) risks.push('当前信息下未发现明显风险，建议小规模试跑验证');
+  // ---- 风险 ----
+  const risks = [];
+  const riskItems = [];
+  if (competition >= 70) riskItems.push({ risk: '竞争激烈，起号周期可能较长', severity: '高', mitigation: '建议从细分场景切入，做差异化内容' });
+  if (avgPrice < 20) riskItems.push({ risk: '低客单价需要走量，利润薄', severity: '中', mitigation: '考虑搭配销售或设置阶梯价格' });
+  if (avgPrice > 300) riskItems.push({ risk: '高客单价转化难，决策周期长', severity: '中', mitigation: '需要建立信任背书，建议先做内容积累' });
+  if (commission < 15) riskItems.push({ risk: '佣金比例偏低，ROI回收压力大', severity: '高', mitigation: '尝试与商家谈判提高佣金，或走量换议价' });
+  if (supplyChain === '未填写' || supplyChain === '代理/分销') riskItems.push({ risk: '供应链不明确，可能存在货源不稳定风险', severity: '中', mitigation: '建议先确定稳定供货渠道再大规模推广' });
+  if (riskItems.length === 0) riskItems.push({ risk: '当前信息下未发现明显风险', severity: '低', mitigation: '建议小规模试跑验证数据' });
 
   return {
-    category, priceMin, priceMax, audience, commission, notes,
-    scores: { market: marketScore, comp: compScore, profit: profitScore },
-    marketLevel,
-    marketText,
-    compLevel, compText,
-    strategies: strategies.slice(0, 4),
-    risks,
-    overall: Math.round((marketScore + (100 - compScore) + profitScore) / 3)
+    scores: {
+      marketHeat: Math.round(marketHeat),
+      competition: Math.round(competition),
+      profit: Math.round(profit),
+      trend: Math.round(trend),
+      contentFit: Math.round(contentFit),
+      supplyChain: Math.round(supplyChainScore)
+    },
+    dimensionAnalysis: {
+      marketHeat: { score: Math.round(marketHeat), summary: marketText, factors: ['品类热度良好', '价格带适宜'] },
+      competition: { score: Math.round(competition), summary: compText, entryBarrier: competition >= 65 ? '较高' : '适中', differentiation: '建议聚焦细分场景做差异化' },
+      profit: { score: Math.round(profit), summary: `佣金${commission}%${profit >= 65 ? '，利润空间可观' : '，利润空间一般'}`, roiEstimate: profit >= 65 ? '1:3 ~ 1:5' : '1:1.5 ~ 1:3', breakEven: profit >= 65 ? '1-2个月' : '2-3个月' },
+      trend: { score: Math.round(trend), summary: trend >= 60 ? '品类整体呈上升趋势' : '品类趋势平稳', direction: trend >= 60 ? '上升' : '平稳', seasonality: season },
+      contentFit: { score: Math.round(contentFit), summary: contentFit >= 65 ? '适合通过短视频和直播带货' : '内容制作门槛中等', contentType: contentFit >= 65 ? '短视频种草 + 直播转化' : '直播为主', difficulty: contentFit >= 65 ? '低' : '中等' },
+      supplyChain: { score: Math.round(supplyChainScore), summary: supplyChainScore >= 60 ? '供应链基础良好' : '供应链有待完善' }
+    },
+    overall: {
+      totalScore,
+      verdict,
+      recommendedAction: totalScore >= 70 ? '可以积极布局，尽快起号' : totalScore >= 45 ? '建议小规模试跑，验证数据后决定' : '建议换品类或优化供应链后再评估',
+      riskLevel: totalScore >= 70 ? '低' : totalScore >= 45 ? '中' : '高'
+    },
+    contentStrategy: strategies,
+    risks: riskItems,
+    tags: [
+      marketHeat >= 70 ? '高热度' : '中等热度',
+      competition >= 65 ? '红海品类' : competition <= 35 ? '蓝海品类' : '中等竞争',
+      profit >= 65 ? '利润可观' : '利润一般'
+    ],
+    marketRefs: {
+      similarProducts: '市面上同类产品众多，需差异化定位',
+      priceRange: avgPrice >= 100 ? '中高客单价段' : '中低客单价段',
+      targetGMV: '建议小规模试跑后评估'
+    }
   };
 }
 
-function displayResult(r) {
-  const s = r.scores;
-
-  // Scores
-  setScore('scoreMarket', s.market, '市场潜力');
-  setScore('scoreComp', s.comp, '竞争程度');
-  setScore('scoreProfit', s.profit, '利润空间');
-
-  // Verdict tags
-  const tags = document.getElementById('verdictTags');
-  let tagHtml = '';
-  if (r.overall >= 70) tagHtml += '<span class="tag tag-green">建议入手</span>';
-  else if (r.overall >= 45) tagHtml += '<span class="tag tag-yellow">谨慎评估</span>';
-  else tagHtml += '<span class="tag tag-red">不太建议</span>';
-
-  if (s.market >= 75) tagHtml += '<span class="tag tag-blue">高需求</span>';
-  if (s.comp <= 35) tagHtml += '<span class="tag tag-green">蓝海品类</span>';
-  if (s.comp >= 75) tagHtml += '<span class="tag tag-red">红海竞争</span>';
-  if (s.profit >= 70) tagHtml += '<span class="tag tag-blue">利润可观</span>';
-  tags.innerHTML = tagHtml;
-
-  // Analysis texts
-  document.getElementById('marketAnalysis').textContent = r.marketText;
-  document.getElementById('compAnalysis').textContent = r.compText;
-  document.getElementById('contentStrategy').innerHTML =
-    '<ol style="padding-left:18px;line-height:1.8">' +
-    r.strategies.map(s => `<li style="margin-bottom:4px">${s}</li>`).join('') +
-    '</ol>';
-  document.getElementById('riskWarning').innerHTML =
-    '<ul style="padding-left:18px;line-height:1.8">' +
-    r.risks.map(r => `<li style="margin-bottom:4px;color:#cc2f26">${r}</li>`).join('') +
-    '</ul>';
-
-  document.getElementById('result').classList.add('active');
-}
-
-function setScore(id, val, label) {
-  const el = document.getElementById(id);
-  el.className = 'score-box ' + (val >= 70 ? 'high' : val >= 40 ? 'mid' : 'low');
-  el.querySelector('.num').textContent = val;
-  el.querySelector('.lbl').textContent = label;
-}
-
+// ========== 表单重置 ==========
 function resetForm() {
   document.getElementById('inputCard').style.display = 'block';
   document.getElementById('result').classList.remove('active');
@@ -422,28 +764,42 @@ function resetForm() {
   document.getElementById('priceMin').value = '29';
   document.getElementById('priceMax').value = '199';
   document.getElementById('commission').value = '20';
+  document.getElementById('audience').selectedIndex = 0;
+  document.getElementById('season').selectedIndex = 0;
+  document.getElementById('competitorLevel').selectedIndex = 0;
+  document.getElementById('supplyChain').selectedIndex = 0;
+  document.getElementById('monthlySales').value = '';
   document.getElementById('notes').value = '';
+  document.getElementById('marketRefCard').style.display = 'none';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function saveToHistory(result) {
-  const key = 'douyin_analysis_history';
+// ========== 历史记录 ==========
+function saveToHistory(data, input) {
+  const key = 'douyin_analysis_v2_history';
   let history = JSON.parse(localStorage.getItem(key) || '[]');
-  const s = result.scores || { market: result.marketScore, comp: result.compScore, profit: result.profitScore };
-  const ov = result.overall || Math.round((s.market + (100 - s.comp) + s.profit) / 3);
+  const scores = data.scores || {};
+  const ov = data.overall?.totalScore || 50;
   history.unshift({
-    category: result.category,
+    category: input.category,
     overall: ov,
-    time: result.time || new Date().toLocaleString('zh-CN'),
-    scores: s
+    time: new Date().toLocaleString('zh-CN'),
+    scores: {
+      marketHeat: scores.marketHeat,
+      competition: scores.competition,
+      profit: scores.profit,
+      trend: scores.trend,
+      contentFit: scores.contentFit,
+      supplyChain: scores.supplyChain
+    }
   });
-  if (history.length > 20) history = history.slice(0, 20);
+  if (history.length > 30) history = history.slice(0, 30);
   localStorage.setItem(key, JSON.stringify(history));
   renderHistory();
-
 }
+
 function renderHistory() {
-  const key = 'douyin_analysis_history';
+  const key = 'douyin_analysis_v2_history';
   const history = JSON.parse(localStorage.getItem(key) || '[]');
   const list = document.getElementById('historyList');
   if (history.length === 0) {
@@ -454,8 +810,8 @@ function renderHistory() {
     const s = h.scores || {};
     return `<div class="history-item" onclick="loadHistory(${i})">
       <div class="info">
-        <div class="name">${h.category} · 综合 ${h.overall||'?'} 分</div>
-        <div class="meta">${h.time||''} · 市场${s.market||'?'} | 竞争${s.comp||'?'} | 利润${s.profit||'?'}</div>
+        <div class="name">${h.category} · 综合 ${h.overall} 分</div>
+        <div class="meta">${h.time} · 热度${s.marketHeat||'?'} 竞争${s.competition||'?'} 利润${s.profit||'?'}</div>
       </div>
       <button class="delete-btn" onclick="event.stopPropagation();deleteHistory(${i})" title="删除">×</button>
     </div>`;
@@ -463,24 +819,21 @@ function renderHistory() {
 }
 
 function loadHistory(index) {
-  const key = 'douyin_analysis_history';
+  const key = 'douyin_analysis_v2_history';
   const history = JSON.parse(localStorage.getItem(key) || '[]');
   const h = history[index];
   if (!h) return;
-  // Re-run analysis with stored params
   document.getElementById('inputCard').style.display = 'none';
   document.getElementById('loading').classList.add('active');
   setTimeout(() => {
-    // Simply display from saved scores
     document.getElementById('loading').classList.remove('active');
     document.getElementById('result').classList.add('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, 300);
 }
 
-
 function deleteHistory(index) {
-  const key = 'douyin_analysis_history';
+  const key = 'douyin_analysis_v2_history';
   let history = JSON.parse(localStorage.getItem(key) || '[]');
   history.splice(index, 1);
   localStorage.setItem(key, JSON.stringify(history));
@@ -489,9 +842,10 @@ function deleteHistory(index) {
 
 function clearAllHistory() {
   if (!confirm('确定要清空所有历史记录吗？')) return;
-  localStorage.removeItem('douyin_analysis_history');
+  localStorage.removeItem('douyin_analysis_v2_history');
   document.getElementById('historyList').innerHTML = '<div class="empty">暂无记录</div>';
 }
+
 renderHistory();
 </script>
 </body>
