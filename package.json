@@ -1,5 +1,4 @@
 {
   "name": "douyin-commerce-tools",
-  "private": true,
-  "type": "module"
+  "private": true
 }
