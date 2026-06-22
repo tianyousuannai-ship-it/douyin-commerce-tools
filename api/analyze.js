@@ -24,7 +24,7 @@ export default async function handler(req, res) {
 
   const userMsg = `品类：${category || ""}，价格：${priceMin || 0}-${priceMax || 999}元，人群：${audience || ""}，佣金：${commission || 20}%，备注：${notes || ""}`;
 
-  const systemPrompt = `你是抖音宠物带货选品分析专家。严格按JSON格式输出（不要markdown代码块）：
+  const systemPrompt = `你是抖音带货选品分析专家。严格按JSON格式输出（不要markdown代码块）：
 {"marketScore":0-100,"compScore":0-100,"profitScore":0-100,"marketAnalysis":"市场分析100字","compAnalysis":"竞争分析100字","contentStrategy":["策略1","策略2","策略3","策略4"],"risks":["风险1"],"overallVerdict":"建议入手|谨慎评估|不太建议","tags":["标签1","标签2"]}`;
 
   try {
