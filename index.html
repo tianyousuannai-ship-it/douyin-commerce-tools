@@ -229,7 +229,8 @@ async function analyze() {
 
   try {
     const resp = await fetch('/api/analyze', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input)
     });
     const data = await resp.json();
@@ -269,8 +270,6 @@ function displayAIResult(data, input) {
 
 // Fallback local analysis when API is unavailable
 function runAnalysisLocal(category, priceMin, priceMax, audience, commission, notes) {
-
-function runAnalysis(category, priceMin, priceMax, audience, commission, notes) {
   const avgPrice = (priceMin + priceMax) / 2;
   const cat = category.toLowerCase();
 
@@ -417,17 +416,19 @@ function resetForm() {
 function saveToHistory(result) {
   const key = 'douyin_analysis_history';
   let history = JSON.parse(localStorage.getItem(key) || '[]');
+  const s = result.scores || { market: result.marketScore, comp: result.compScore, profit: result.profitScore };
+  const ov = result.overall || Math.round((s.market + (100 - s.comp) + s.profit) / 3);
   history.unshift({
     category: result.category,
-    overall: result.overall,
-    time: new Date().toLocaleString('zh-CN'),
-    scores: result.scores
+    overall: ov,
+    time: result.time || new Date().toLocaleString('zh-CN'),
+    scores: s
   });
   if (history.length > 20) history = history.slice(0, 20);
   localStorage.setItem(key, JSON.stringify(history));
   renderHistory();
-}
 
+}
 function renderHistory() {
   const key = 'douyin_analysis_history';
   const history = JSON.parse(localStorage.getItem(key) || '[]');
@@ -436,12 +437,13 @@ function renderHistory() {
     list.innerHTML = '<div class="empty">暂无记录</div>';
     return;
   }
-  list.innerHTML = history.map((h, i) =>
-    `<div class="history-item" onclick="loadHistory(${i})">
-      <div class="name">${h.category} · 综合 ${h.overall} 分</div>
-      <div class="meta">${h.time} · 市场${h.scores.market} | 竞争${h.scores.comp} | 利润${h.scores.profit}</div>
-    </div>`
-  ).join('');
+  list.innerHTML = history.map((h, i) => {
+    const s = h.scores || {};
+    return `<div class="history-item" onclick="loadHistory(${i})">
+      <div class="name">${h.category} · 综合 ${h.overall||'?'} 分</div>
+      <div class="meta">${h.time||''} · 市场${s.market||'?'} | 竞争${s.comp||'?'} | 利润${s.profit||'?'}</div>
+    </div>`;
+  }).join('');
 }
 
 function loadHistory(index) {
@@ -459,6 +461,7 @@ function loadHistory(index) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, 300);
 }
+
 
 renderHistory();
 </script>
