@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宠物带货封面生成器</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #1a1a2e; color: #eee;
+    min-height: 100vh; padding: 20px;
+  }
+  .header { text-align: center; margin-bottom: 24px; }
+  .header h1 { font-size: 22px; font-weight: 700; }
+  .header p { font-size: 13px; color: #888; margin-top: 4px; }
+
+  .main { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+  .card {
+    background: #16213e; border-radius: 12px; padding: 20px;
+    border: 1px solid #0f3460;
+  }
+  .card-label {
+    font-size: 12px; font-weight: 600; color: #e94560;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px;
+  }
+
+  .input-group { margin-bottom: 12px; }
+  .input-group:last-child { margin-bottom: 0; }
+  .input-group label { display: block; font-size: 13px; color: #aaa; margin-bottom: 4px; }
+  .input-group input, .input-group select {
+    width: 100%; padding: 8px 10px; border: 1px solid #0f3460;
+    border-radius: 6px; font-size: 14px; background: #1a1a2e; color: #eee;
+  }
+  .row { display: flex; gap: 10px; }
+  .row .input-group { flex: 1; }
+
+  .btn {
+    width: 100%; padding: 12px; border: none; border-radius: 8px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    background: #e94560; color: #fff; margin-top: 8px;
+    transition: opacity 0.15s;
+  }
+  .btn:active { opacity: 0.8; }
+  .btn.secondary { background: #0f3460; }
+
+  .preview-area { text-align: center; }
+  canvas {
+    max-width: 100%; border-radius: 8px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  .actions { display: flex; gap: 10px; margin-top: 12px; }
+
+  .templates { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .tpl-chip {
+    padding: 6px 14px; border-radius: 20px; font-size: 13px;
+    cursor: pointer; border: 1px solid #0f3460; background: #1a1a2e; color: #aaa;
+    transition: all 0.15s;
+  }
+  .tpl-chip:hover, .tpl-chip.active { background: #e94560; border-color: #e94560; color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🐱 宠物带货封面生成器</h1>
+  <p>选模板 → 填信息 → 一键下载</p>
+</div>
+
+<div class="main">
+  <div class="card">
+    <div class="card-label">模板</div>
+    <div class="templates" id="templates"></div>
+
+    <div class="row">
+      <div class="input-group">
+        <label>主标题</label>
+        <input type="text" id="title" value="猫咪最爱的零食推荐" maxlength="20">
+      </div>
+    </div>
+    <div class="row">
+      <div class="input-group">
+        <label>副标题</label>
+        <input type="text" id="subtitle" value="吃了停不下来" maxlength="16">
+      </div>
+      <div class="input-group">
+        <label>标签</label>
+        <select id="badge">
+          <option value="推荐">推荐</option>
+          <option value="必入">必入</option>
+          <option value="爆款">爆款</option>
+          <option value="亲测">亲测</option>
+          <option value="好物">好物</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" onclick="drawCover()">更新预览</button>
+  </div>
+
+  <div class="preview-area">
+    <canvas id="canvas" width="1080" height="1440"></canvas>
+    <div class="actions">
+      <button class="btn" onclick="downloadCover()">下载封面</button>
+      <button class="btn secondary" onclick="randomize()">随机换</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const templates = [
+  { name: '暖橘', bg: '#ff6b35', accent: '#f7c948', text: '#fff', sub: '#ffe0cc' },
+  { name: '薄荷', bg: '#00b894', accent: '#55efc4', text: '#fff', sub: '#d4f5e9' },
+  { name: '星空', bg: '#2d1b69', accent: '#e94560', text: '#fff', sub: '#b8a9e8' },
+  { name: '日落', bg: '#e17055', accent: '#fab1a0', text: '#fff', sub: '#ffe0d6' },
+  { name: '森林', bg: '#1e3a2f', accent: '#2ecc71', text: '#fff', sub: '#a3d9b1' },
+  { name: '樱花', bg: '#fd79a8', accent: '#ffeaa7', text: '#fff', sub: '#ffe0ec' },
+  { name: '海洋', bg: '#0a3d62', accent: '#60a3bc', text: '#fff', sub: '#b8dbe8' },
+  { name: '浆果', bg: '#6c1d5b', accent: '#e056a0', text: '#fff', sub: '#f0c6e0' },
+];
+
+let currentTpl = templates[0];
+
+// Render template chips
+const tplContainer = document.getElementById('templates');
+templates.forEach((t, i) => {
+  const chip = document.createElement('span');
+  chip.className = 'tpl-chip' + (i === 0 ? ' active' : '');
+  chip.textContent = t.name;
+  chip.style.background = t.accent;
+  chip.style.color = '#000';
+  chip.onclick = () => {
+    currentTpl = t;
+    document.querySelectorAll('.tpl-chip').forEach(c => {
+      c.classList.remove('active');
+      c.style.background = '#1a1a2e';
+      c.style.color = '#aaa';
+    });
+    chip.classList.add('active');
+    chip.style.background = t.accent;
+    chip.style.color = '#000';
+    drawCover();
+  };
+  tplContainer.appendChild(chip);
+});
+
+const petEmojis = ['🐱', '🐶', '🐱', '🐕', '🐈', '🐾', '🐱'];
+const decorShapes = ['●', '○', '◆', '◇', '▲', '△', '★', '☆'];
+
+function drawCover() {
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const W = 1080, H = 1440;
+  const tpl = currentTpl;
+
+  // Background gradient
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, tpl.bg);
+  grad.addColorStop(1, darken(tpl.bg, 30));
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Decorative circles
+  ctx.globalAlpha = 0.08;
+  for (let i = 0; i < 12; i++) {
+    const x = Math.random() * W;
+    const y = Math.random() * H;
+    const r = 60 + Math.random() * 300;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = tpl.accent;
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Decorative dots pattern
+  ctx.globalAlpha = 0.15;
+  for (let i = 0; i < 50; i++) {
+    const x = 40 + Math.random() * (W - 80);
+    const y = 40 + Math.random() * (H - 80);
+    ctx.beginPath();
+    ctx.arc(x, y, 4 + Math.random() * 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Central circle background for text area
+  const cx = W / 2, cy = H / 2 - 80;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 320, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx.fill();
+
+  // Ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, 320, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Outer ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, 350, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Pet emoji (large)
+  ctx.font = '200px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🐱', cx, cy - 260);
+
+  // Small paw prints
+  ctx.font = '48px sans-serif';
+  ctx.fillText('🐾', cx - 140, cy - 200);
+  ctx.fillText('🐾', cx + 180, cy - 160);
+  ctx.fillText('🐾', cx - 200, cy + 40);
+  ctx.fillText('🐾', cx + 200, cy - 40);
+
+  // Main title
+  const title = document.getElementById('title').value || '宠物好物推荐';
+  ctx.fillStyle = tpl.text;
+  ctx.font = 'bold 72px -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText(title, cx, cy + 120);
+
+  // Decorative line under title
+  ctx.beginPath();
+  ctx.moveTo(cx - 180, cy + 165);
+  ctx.lineTo(cx + 180, cy + 165);
+  ctx.strokeStyle = tpl.accent;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  // Subtitle
+  const subtitle = document.getElementById('subtitle').value || '';
+  if (subtitle) {
+    ctx.fillStyle = tpl.sub;
+    ctx.font = '38px -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif';
+    ctx.fillText(subtitle, cx, cy + 220);
+  }
+
+  // Badge
+  const badge = document.getElementById('badge').value;
+  const badgeW = 140, badgeH = 56;
+  const badgeX = cx - badgeW / 2, badgeY = cy + 260;
+  ctx.fillStyle = tpl.accent;
+  roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 28);
+  ctx.fill();
+  ctx.fillStyle = darken(tpl.accent, 60);
+  ctx.font = 'bold 28px -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText(badge, cx, badgeY + badgeH / 2);
+
+  // Bottom section
+  const bottomY = H - 200;
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.fillRect(0, bottomY, W, 200);
+
+  // Bottom icons
+  ctx.font = '36px sans-serif';
+  ctx.fillStyle = '#fff';
+  ctx.globalAlpha = 0.6;
+  ctx.fillText('❤️ 真实体验', 100, bottomY + 60);
+  ctx.fillText('⭐ 品质保证', W / 2 - 140, bottomY + 60);
+  ctx.fillText('📦 快速发货', W - 300, bottomY + 60);
+
+  // Bottom divider
+  ctx.globalAlpha = 0.3;
+  ctx.beginPath();
+  ctx.moveTo(60, bottomY + 100);
+  ctx.lineTo(W - 60, bottomY + 100);
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Footer text
+  ctx.globalAlpha = 0.4;
+  ctx.font = '24px -apple-system, "PingFang SC", sans-serif';
+  ctx.fillStyle = '#fff';
+  ctx.fillText('关注我，每天分享养宠好物 🎁', cx, bottomY + 145);
+
+  ctx.globalAlpha = 1;
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function darken(hex, amount) {
+  const num = parseInt(hex.slice(1), 16);
+  const r = Math.max(0, (num >> 16) - amount);
+  const g = Math.max(0, ((num >> 8) & 0xff) - amount);
+  const b = Math.max(0, (num & 0xff) - amount);
+  return `rgb(${r},${g},${b})`;
+}
+
+function downloadCover() {
+  const canvas = document.getElementById('canvas');
+  const link = document.createElement('a');
+  link.download = 'pet-cover.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+function randomize() {
+  const titles = [
+    '猫咪最爱的零食', '主子亲测好物', '养猫必备神器', '铲屎官必入',
+    '猫咪零食大推荐', '我家猫最爱的玩具', '养猫好物分享', '猫咪用品测评'
+  ];
+  const subs = [
+    '吃了停不下来', '用了都说好', '回购无数次', '猫主子亲测',
+    '铲屎官福音', '性价比超高', '新手养猫必备', '真心推荐'
+  ];
+  document.getElementById('title').value = titles[Math.floor(Math.random() * titles.length)];
+  document.getElementById('subtitle').value = subs[Math.floor(Math.random() * subs.length)];
+  const tplIdx = Math.floor(Math.random() * templates.length);
+  currentTpl = templates[tplIdx];
+  document.querySelectorAll('.tpl-chip').forEach((c, i) => {
+    c.classList.toggle('active', i === tplIdx);
+    if (i === tplIdx) { c.style.background = currentTpl.accent; c.style.color = '#000'; }
+    else { c.style.background = '#1a1a2e'; c.style.color = '#aaa'; }
+  });
+  drawCover();
+}
+
+// Initial draw
+drawCover();
+</script>
+</body>
+</html>

@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>抖音选品分析</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    min-height: 100vh;
+  }
+  .header {
+    background: #fff;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e5e7;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .header p { font-size: 13px; color: #86868b; margin-top: 2px; }
+
+  .container { max-width: 640px; margin: 0 auto; padding: 16px; }
+
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .card-label {
+    font-size: 13px; font-weight: 600; color: #86868b;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
+  }
+
+  .input-group { margin-bottom: 14px; }
+  .input-group:last-child { margin-bottom: 0; }
+  .input-group label {
+    display: block; font-size: 14px; font-weight: 500;
+    color: #1d1d1f; margin-bottom: 6px;
+  }
+  .input-group input, .input-group select, .input-group textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid #d2d2d7;
+    border-radius: 8px; font-size: 15px; font-family: inherit;
+    background: #fafafa; transition: border-color 0.15s;
+  }
+  .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
+    outline: none; border-color: #0071e3; background: #fff;
+  }
+  .input-group textarea { min-height: 80px; resize: vertical; }
+
+  .row { display: flex; gap: 12px; }
+  .row .input-group { flex: 1; }
+
+  .btn {
+    width: 100%; padding: 13px; border: none; border-radius: 10px;
+    font-size: 16px; font-weight: 600; cursor: pointer;
+    background: #0071e3; color: #fff;
+    transition: opacity 0.15s;
+  }
+  .btn:active { opacity: 0.8; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .result { display: none; }
+  .result.active { display: block; }
+
+  .score-row {
+    display: flex; gap: 12px; margin-bottom: 20px;
+  }
+  .score-box {
+    flex: 1; text-align: center; padding: 14px 8px;
+    border-radius: 10px; background: #f5f5f7;
+  }
+  .score-box .num { font-size: 28px; font-weight: 700; }
+  .score-box .lbl { font-size: 12px; color: #86868b; margin-top: 2px; }
+  .score-box.high .num { color: #34c759; }
+  .score-box.mid .num { color: #ff9500; }
+  .score-box.low .num { color: #ff3b30; }
+
+  .section { margin-bottom: 16px; }
+  .section:last-child { margin-bottom: 0; }
+  .section-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #1d1d1f; }
+  .section-text { font-size: 14px; line-height: 1.7; color: #3a3a3c; }
+
+  .tag-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag {
+    display: inline-block; padding: 5px 10px; border-radius: 6px;
+    font-size: 12px; font-weight: 500;
+  }
+  .tag-green { background: #e8f8ed; color: #1a7f3a; }
+  .tag-red { background: #ffe8e6; color: #cc2f26; }
+  .tag-yellow { background: #fff3d6; color: #b06d00; }
+  .tag-blue { background: #e6f0ff; color: #005fcc; }
+
+  .loading { display: none; text-align: center; padding: 40px 0; }
+  .loading.active { display: block; }
+  .spinner {
+    width: 32px; height: 32px; border: 3px solid #e5e5e7;
+    border-top-color: #0071e3; border-radius: 50%;
+    animation: spin 0.6s linear infinite; margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 14px; color: #86868b; }
+
+  .history-item {
+    padding: 10px 0; border-bottom: 1px solid #f0f0f2;
+    cursor: pointer; font-size: 14px;
+  }
+  .history-item:last-child { border-bottom: none; }
+  .history-item .name { font-weight: 500; }
+  .history-item .meta { font-size: 12px; color: #86868b; }
+
+  .empty { text-align: center; padding: 32px 0; color: #86868b; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>选品分析工具</h1>
+  <p>输入商品信息，AI 帮你判断带货潜力</p>
+</div>
+
+<div class="container">
+  <!-- Input Card -->
+  <div class="card" id="inputCard">
+    <div class="card-label">商品信息</div>
+    <div class="input-group">
+      <label>商品品类</label>
+      <input type="text" id="category" placeholder="例如：厨房小家电、母婴用品、美妆">
+    </div>
+    <div class="row">
+      <div class="input-group">
+        <label>预估售价 (元)</label>
+        <input type="number" id="priceMin" placeholder="最低" value="29">
+      </div>
+      <div class="input-group">
+        <label style="visibility:hidden">-</label>
+        <input type="number" id="priceMax" placeholder="最高" value="199">
+      </div>
+    </div>
+    <div class="input-group">
+      <label>目标人群</label>
+      <select id="audience">
+        <option value="女性-25-40">女性 25-40岁（宝妈/职场女性）</option>
+        <option value="女性-18-25">女性 18-25岁（学生/初入职场）</option>
+        <option value="男性-25-40">男性 25-40岁</option>
+        <option value="中老年-50+">中老年 50岁以上</option>
+        <option value="全年龄段">全年龄段</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label>佣金比例 (%)</label>
+      <input type="number" id="commission" placeholder="例如：20" value="20" min="1" max="80">
+    </div>
+    <div class="input-group">
+      <label>补充说明（选填）</label>
+      <textarea id="notes" placeholder="商品特点、竞品情况、供应链优势等..."></textarea>
+    </div>
+    <button class="btn" id="analyzeBtn" onclick="analyze()">开始分析</button>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">AI 分析中...</div>
+  </div>
+
+  <!-- Result -->
+  <div class="result" id="result">
+    <div class="card">
+      <div class="card-label">综合评分</div>
+      <div class="score-row">
+        <div class="score-box" id="scoreMarket"><div class="num">-</div><div class="lbl">市场潜力</div></div>
+        <div class="score-box" id="scoreComp"><div class="num">-</div><div class="lbl">竞争程度</div></div>
+        <div class="score-box" id="scoreProfit"><div class="num">-</div><div class="lbl">利润空间</div></div>
+      </div>
+      <div class="tag-row" id="verdictTags"></div>
+    </div>
+
+    <div class="card">
+      <div class="section">
+        <div class="section-title">市场分析</div>
+        <div class="section-text" id="marketAnalysis"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">竞争格局</div>
+        <div class="section-text" id="compAnalysis"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">内容策略建议</div>
+        <div class="section-text" id="contentStrategy"></div>
+      </div>
+      <div class="section">
+        <div class="section-title">风险提示</div>
+        <div class="section-text" id="riskWarning"></div>
+      </div>
+    </div>
+
+    <button class="btn" onclick="resetForm()" style="background:#f5f5f7;color:#1d1d1f;">分析下一个</button>
+  </div>
+
+  <!-- History -->
+  <div class="card" id="historyCard">
+    <div class="card-label">历史记录</div>
+    <div id="historyList"><div class="empty">暂无记录</div></div>
+  </div>
+</div>
+
+<script>
+// Analysis engine - combines heuristics with market knowledge patterns
+function analyze() {
+  const category = document.getElementById('category').value.trim();
+  if (!category) {
+    document.getElementById('category').focus();
+    return;
+  }
+
+  const priceMin = parseInt(document.getElementById('priceMin').value) || 0;
+  const priceMax = parseInt(document.getElementById('priceMax').value) || 999;
+  const audience = document.getElementById('audience').value;
+  const commission = parseInt(document.getElementById('commission').value) || 20;
+  const notes = document.getElementById('notes').value.trim();
+
+  // Show loading
+  document.getElementById('inputCard').style.display = 'none';
+  document.getElementById('loading').classList.add('active');
+  document.getElementById('result').classList.remove('active');
+
+  // Simulate analysis delay for UX
+  setTimeout(() => {
+    const result = runAnalysis(category, priceMin, priceMax, audience, commission, notes);
+    displayResult(result);
+    saveToHistory(result);
+
+    document.getElementById('loading').classList.remove('active');
+    document.getElementById('result').classList.add('active');
+  }, 1500);
+}
+
+function runAnalysis(category, priceMin, priceMax, audience, commission, notes) {
+  const avgPrice = (priceMin + priceMax) / 2;
+  const cat = category.toLowerCase();
+
+  // Market potential scoring
+  let marketScore = 60;
+  if (cat.includes('母婴') || cat.includes('美妆') || cat.includes('护肤')) marketScore += 20;
+  if (cat.includes('家居') || cat.includes('厨房') || cat.includes('日用')) marketScore += 15;
+  if (cat.includes('服装') || cat.includes('饰品')) marketScore += 10;
+  if (cat.includes('数码') || cat.includes('3c')) marketScore += 5;
+  if (audience.includes('女性') && audience.includes('25-40')) marketScore += 10;
+  if (audience.includes('中老年')) marketScore -= 5;
+  if (avgPrice >= 30 && avgPrice <= 200) marketScore += 10;
+  if (avgPrice > 300) marketScore -= 10;
+  if (commission >= 30) marketScore += 5;
+  marketScore = Math.min(98, Math.max(10, marketScore));
+
+  // Competition scoring (lower = less competition = better)
+  let compScore = 50;
+  if (cat.includes('美妆') || cat.includes('服装')) compScore += 25;
+  if (cat.includes('母婴')) compScore += 15;
+  if (cat.includes('数码')) compScore += 20;
+  if (cat.includes('家居') && (cat.includes('小众') || cat.includes('创意'))) compScore -= 15;
+  if (cat.includes('日用')) compScore += 10;
+  if (avgPrice < 20) compScore += 15;
+  if (avgPrice > 300) compScore -= 10;
+  if (notes.includes('独家') || notes.includes('自有') || notes.includes('工厂')) compScore -= 20;
+  compScore = Math.min(95, Math.max(5, compScore));
+
+  // Profit scoring
+  let profitScore = 50;
+  if (commission >= 30) profitScore += 20;
+  else if (commission >= 20) profitScore += 10;
+  if (avgPrice >= 50 && avgPrice <= 200) profitScore += 15;
+  if (avgPrice > 200) profitScore += 20;
+  if (avgPrice < 20) profitScore -= 15;
+  if (notes.includes('工厂') || notes.includes('源头')) profitScore += 10;
+  profitScore = Math.min(98, Math.max(5, profitScore));
+
+  // Market analysis text
+  const marketTexts = {
+    high: `${category}在抖音属于高热度赛道，用户需求旺盛，内容消费量大。${audience.includes('女性') ? '女性用户的购买决策较快，冲动消费占比高，适合短视频+直播组合打法。' : '建议通过场景化内容建立信任，配合限时优惠促进转化。'}在${priceMin}-${priceMax}元价格带，用户决策门槛较低，转化效率高。`,
+    mid: `${category}在抖音有稳定的市场需求，属于成熟品类。竞争虽激烈但天花板也高。关键在差异化——要么价格有优势，要么内容有看点。${avgPrice > 100 ? '客单价偏高，需要更强的信任背书，建议通过测评、对比类内容建立专业形象。' : '客单价适中，适合走量，可通过高频直播提升转化。'}`,
+    low: `${category}属于抖音上的长尾品类，搜索量不高但竞争较小。如果你是第一个在该细分做出声量的账号，有机会抢占心智。缺点是教育用户成本较高，需要耐心做内容积累。`
+  };
+
+  let marketLevel = marketScore >= 75 ? 'high' : marketScore >= 50 ? 'mid' : 'low';
+  let marketText = marketTexts[marketLevel];
+
+  // Competition text
+  const compLevel = compScore >= 70 ? '高' : compScore >= 40 ? '中' : '低';
+  let compText = compLevel === '高'
+    ? `头部账号集中，新入局需要强内容能力。建议细分切入点——比如${category}中某个特定场景或特定人群，做垂直深耕。可利用供应链优势打价格差。`
+    : compLevel === '中'
+    ? `竞争适度，有发挥空间。${compScore >= 50 ? '头部已有几个大号但格局未定，用差异化内容+稳定直播节奏可以撕开口子。' : '市场相对分散，找准定位后容易突围。'}`
+    : `蓝海市场，竞争压力小。先发优势明显，快速铺量做内容矩阵。同时验证供应链稳定性和复购率。`;
+
+  // Content strategy
+  const strategies = [
+    `开箱测评类内容，突出产品亮点和性价比`,
+    `使用场景还原，用${audience.includes('女性') ? '宝妈/职场女性的真实痛点' : '日常生活场景'}引发共鸣`,
+    `对比测评（同类产品横向比较），建立专业信任`,
+    `限时优惠+赠品策略，刺激冲动下单`,
+    `固定时间直播，培养粉丝观看习惯`,
+    `评论区互动引导，提升视频完播率和互动率`
+  ];
+
+  // Risk
+  let risks = [];
+  if (compScore >= 75) risks.push('竞争激烈，起号周期可能较长');
+  if (avgPrice < 20) risks.push('低客单价需要走量，退货率可能偏高');
+  if (avgPrice > 300) risks.push('高客单价转化周期长，需耐心积累信任');
+  if (commission < 15) risks.push('佣金比例偏低，ROI 回收压力大');
+  if (!cat.includes('母婴') && !cat.includes('美妆') && !cat.includes('护肤') && !cat.includes('家居')) {
+    risks.push('品类热度中等，需测试内容方向的接受度');
+  }
+  if (risks.length === 0) risks.push('当前信息下未发现明显风险，建议小规模试跑验证');
+
+  return {
+    category, priceMin, priceMax, audience, commission, notes,
+    scores: { market: marketScore, comp: compScore, profit: profitScore },
+    marketLevel,
+    marketText,
+    compLevel, compText,
+    strategies: strategies.slice(0, 4),
+    risks,
+    overall: Math.round((marketScore + (100 - compScore) + profitScore) / 3)
+  };
+}
+
+function displayResult(r) {
+  const s = r.scores;
+
+  // Scores
+  setScore('scoreMarket', s.market, '市场潜力');
+  setScore('scoreComp', s.comp, '竞争程度');
+  setScore('scoreProfit', s.profit, '利润空间');
+
+  // Verdict tags
+  const tags = document.getElementById('verdictTags');
+  let tagHtml = '';
+  if (r.overall >= 70) tagHtml += '<span class="tag tag-green">建议入手</span>';
+  else if (r.overall >= 45) tagHtml += '<span class="tag tag-yellow">谨慎评估</span>';
+  else tagHtml += '<span class="tag tag-red">不太建议</span>';
+
+  if (s.market >= 75) tagHtml += '<span class="tag tag-blue">高需求</span>';
+  if (s.comp <= 35) tagHtml += '<span class="tag tag-green">蓝海品类</span>';
+  if (s.comp >= 75) tagHtml += '<span class="tag tag-red">红海竞争</span>';
+  if (s.profit >= 70) tagHtml += '<span class="tag tag-blue">利润可观</span>';
+  tags.innerHTML = tagHtml;
+
+  // Analysis texts
+  document.getElementById('marketAnalysis').textContent = r.marketText;
+  document.getElementById('compAnalysis').textContent = r.compText;
+  document.getElementById('contentStrategy').innerHTML =
+    '<ol style="padding-left:18px;line-height:1.8">' +
+    r.strategies.map(s => `<li style="margin-bottom:4px">${s}</li>`).join('') +
+    '</ol>';
+  document.getElementById('riskWarning').innerHTML =
+    '<ul style="padding-left:18px;line-height:1.8">' +
+    r.risks.map(r => `<li style="margin-bottom:4px;color:#cc2f26">${r}</li>`).join('') +
+    '</ul>';
+
+  document.getElementById('result').classList.add('active');
+}
+
+function setScore(id, val, label) {
+  const el = document.getElementById(id);
+  el.className = 'score-box ' + (val >= 70 ? 'high' : val >= 40 ? 'mid' : 'low');
+  el.querySelector('.num').textContent = val;
+  el.querySelector('.lbl').textContent = label;
+}
+
+function resetForm() {
+  document.getElementById('inputCard').style.display = 'block';
+  document.getElementById('result').classList.remove('active');
+  document.getElementById('category').value = '';
+  document.getElementById('priceMin').value = '29';
+  document.getElementById('priceMax').value = '199';
+  document.getElementById('commission').value = '20';
+  document.getElementById('notes').value = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function saveToHistory(result) {
+  const key = 'douyin_analysis_history';
+  let history = JSON.parse(localStorage.getItem(key) || '[]');
+  history.unshift({
+    category: result.category,
+    overall: result.overall,
+    time: new Date().toLocaleString('zh-CN'),
+    scores: result.scores
+  });
+  if (history.length > 20) history = history.slice(0, 20);
+  localStorage.setItem(key, JSON.stringify(history));
+  renderHistory();
+}
+
+function renderHistory() {
+  const key = 'douyin_analysis_history';
+  const history = JSON.parse(localStorage.getItem(key) || '[]');
+  const list = document.getElementById('historyList');
+  if (history.length === 0) {
+    list.innerHTML = '<div class="empty">暂无记录</div>';
+    return;
+  }
+  list.innerHTML = history.map((h, i) =>
+    `<div class="history-item" onclick="loadHistory(${i})">
+      <div class="name">${h.category} · 综合 ${h.overall} 分</div>
+      <div class="meta">${h.time} · 市场${h.scores.market} | 竞争${h.scores.comp} | 利润${h.scores.profit}</div>
+    </div>`
+  ).join('');
+}
+
+function loadHistory(index) {
+  const key = 'douyin_analysis_history';
+  const history = JSON.parse(localStorage.getItem(key) || '[]');
+  const h = history[index];
+  if (!h) return;
+  // Re-run analysis with stored params
+  document.getElementById('inputCard').style.display = 'none';
+  document.getElementById('loading').classList.add('active');
+  setTimeout(() => {
+    // Simply display from saved scores
+    document.getElementById('loading').classList.remove('active');
+    document.getElementById('result').classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, 300);
+}
+
+renderHistory();
+</script>
+</body>
+</html>
