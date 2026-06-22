@@ -2,6 +2,8 @@
   "buildCommand": "",
   "outputDirectory": ".",
   "rewrites": [
-    { "source": "/api/analyze", "destination": "/api/analyze" }
+    { "source": "/api/analyze", "destination": "/api/analyze" },
+    { "source": "/api/market-intel", "destination": "/data/market-intel.json" },
+    { "source": "/api/health", "destination": "/api/health" }
   ]
 }

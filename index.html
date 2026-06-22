@@ -201,6 +201,13 @@
   }
   .empty { text-align: center; padding: 30px 0; color: var(--muted); font-size: 13px; }
 
+  .influencer-item {
+    padding: 10px 14px; margin-bottom: 8px; border-radius: 8px;
+    background: #f0f7ff; border-left: 3px solid var(--primary);
+    font-size: 13px; line-height: 1.6; color: #3a3a3c;
+  }
+  .influencer-item:last-child { margin-bottom: 0; }
+
   @media (max-width: 480px) {
     .score-grid { grid-template-columns: 1fr 1fr; }
     .market-refs { grid-template-columns: 1fr; }
@@ -301,6 +308,8 @@
 
   <!-- Result -->
   <div class="result" id="result">
+    <!-- 数据来源标识 -->
+    <div id="dataSource" style="text-align:center;font-size:11px;color:var(--muted);padding:6px 0 0;"></div>
     <!-- 综合评分 -->
     <div class="card">
       <div class="card-label">综合诊断</div>
@@ -334,6 +343,12 @@
     <div class="card">
       <div class="section-title">风险提示</div>
       <div id="riskList"></div>
+    </div>
+
+    <!-- 达人合作建议 -->
+    <div class="card" id="influencerCard" style="display:none">
+      <div class="section-title">达人合作建议</div>
+      <div id="influencerAdvice"></div>
     </div>
 
     <button class="btn" onclick="resetForm()" style="background:#f5f5f7;color:var(--text);margin-top:8px;">分析下一个</button>
@@ -575,148 +590,269 @@ function displayResult(data, input) {
     </div>`;
   }).join('');
 
+  // 达人合作建议
+  const influencerAdvice = data.influencerAdvice || [];
+  const influencerCard = document.getElementById('influencerCard');
+  if (influencerAdvice.length > 0) {
+    influencerCard.style.display = 'block';
+    document.getElementById('influencerAdvice').innerHTML = influencerAdvice.map(a =>
+      `<div class="influencer-item">${a}</div>`
+    ).join('');
+  } else {
+    influencerCard.style.display = 'none';
+  }
+
+  // 数据来源
+  const source = data._source || '';
+  document.getElementById('dataSource').textContent = source ? `分析依据：${source}` : '';
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ========== 本地 Fallback 算法 ==========
+// ========== 市场情报知识库 (嵌入式) ==========
+const MARKET_INTEL = {
+  // 品类基准数据
+  categories: {
+    '美妆': { heat:88, comp:82, contentFit:90, trend:'上升', avgComm:25, price:'39-199', gmv:'5000万-10亿+', key:'国货美妆爆发，成分+性价比是核心卖点', content:['妆教教程','产品测评','素人改造','成分解析'], risks:['品牌集中度高','退货率偏高(8-15%)','信任门槛高'] },
+    '护肤': { heat:85, comp:78, contentFit:88, trend:'上升', avgComm:25, price:'59-299', gmv:'1亿-15亿+', key:'功效护肤成主流，成分党驱动消费决策', content:['成分科普','护肤教程','产品测评','周期打卡'], risks:['功效承诺风险','过敏/售后问题','品牌信任构建周期长'] },
+    '母婴': { heat:82, comp:70, contentFit:85, trend:'上升', avgComm:20, price:'29-199', gmv:'5000万-5亿', key:'宝妈群体粘性高、复购强，信任建立后转化极好', content:['带娃日常','好物开箱','使用对比','亲子互动'], risks:['安全标准严格','品牌忠诚度高切换难','决策周期长'] },
+    '食品': { heat:90, comp:85, contentFit:82, trend:'平稳', avgComm:20, price:'9.9-99', gmv:'1亿-20亿+', key:'低客单冲动消费，适合走量但利润薄', content:['吃播展示','零食大礼包','产地溯源','价格对比'], risks:['同质化严重','利润薄需走量','食品安全风险'] },
+    '零食': { heat:88, comp:83, contentFit:80, trend:'平稳', avgComm:20, price:'9.9-59', gmv:'5000万-8亿', key:'冲动消费为主，视觉呈现和价格是关键', content:['吃播','开箱试吃','囤货攻略','零食测评'], risks:['复购率不稳定','跟风后迅速降温','价格战'] },
+    '女装': { heat:92, comp:90, contentFit:92, trend:'平稳', avgComm:20, price:'49-299', gmv:'2亿-30亿+', key:'最大品类但竞争激烈，需强视觉+强人设', content:['穿搭展示','试穿对比','衣橱整理','平替推荐'], risks:['退货率高(20-35%)','库存压力大','流行周期短'] },
+    '男装': { heat:72, comp:62, contentFit:70, trend:'上升', avgComm:20, price:'59-299', gmv:'3000万-5亿', key:'内容供给缺口大，竞争相对较小，增长空间可观', content:['穿搭改造','单品推荐','品牌对比','场景穿搭'], risks:['决策周期长','内容吸引力偏弱','退货率中等'] },
+    '宠物': { heat:86, comp:72, contentFit:90, trend:'上升', avgComm:22, price:'29-199', gmv:'5000万-5亿', key:'增长强劲，萌宠内容天然高互动', content:['萌宠日常','好物推荐','养宠科普','宠物改造'], risks:['品牌集中度提升中','食品安全敏感','专业度门槛'] },
+    '数码': { heat:78, comp:68, contentFit:72, trend:'平稳', avgComm:12, price:'99-999', gmv:'1亿-10亿+', key:'客单价高但佣金偏低，适合信任型达人', content:['开箱评测','参数对比','使用教程','避坑指南'], risks:['佣金偏低','售后复杂','品牌方控价'] },
+    '3c': { heat:75, comp:65, contentFit:68, trend:'平稳', avgComm:10, price:'99-1999', gmv:'1亿-15亿+', key:'佣金低客单价高，适合信任型达人', content:['新品开箱','对比评测','使用技巧','避坑'], risks:['佣金极低','退货率高','需专业背书'] },
+    '家电': { heat:74, comp:60, contentFit:68, trend:'上升', avgComm:15, price:'199-1999', gmv:'5000万-8亿', key:'小家电内容空间大，解决具体痛点易出爆款', content:['使用场景','效果对比','开箱安装','生活改造'], risks:['退货售后复杂','安装服务','品牌集中'] },
+    '厨具': { heat:72, comp:55, contentFit:78, trend:'上升', avgComm:18, price:'29-299', gmv:'2000万-3亿', key:'厨房场景内容丰富，实用型产品转化率高', content:['使用演示','收纳整理','做饭教程','好物合集'], risks:['客单价偏低','品牌溢价难','品质参差'] },
+    '家居': { heat:80, comp:65, contentFit:85, trend:'上升', avgComm:22, price:'19-299', gmv:'5000万-8亿', key:'改造类内容传播力强，适合展示型带货', content:['改造vlog','收纳攻略','好物开箱','租房好物'], risks:['大件物流','安装售后','选品把控'] },
+    '日用': { heat:76, comp:58, contentFit:65, trend:'平稳', avgComm:25, price:'9.9-99', gmv:'3000万-5亿', key:'刚需品类，复购率高，适合走量型带货', content:['好物合集','对比推荐','生活技巧','性价比榜单'], risks:['品类印象值低','品牌溢价难','利润偏薄'] },
+    '运动': { heat:78, comp:60, contentFit:78, trend:'上升', avgComm:20, price:'49-299', gmv:'3000万-5亿', key:'运动健康趋势上升，内容驱动购买力强', content:['健身教程','装备开箱','效果展示','穿搭分享'], risks:['季节性波动','品牌认知门槛','品类分散'] },
+    '户外': { heat:82, comp:55, contentFit:85, trend:'上升', avgComm:22, price:'49-499', gmv:'3000万-6亿', key:'露营热潮持续，内容天然高互动高传播', content:['露营vlog','装备分享','户外攻略','场景展示'], risks:['季节性强','复购周期长','天气依赖'] },
+    '饰品': { heat:75, comp:62, contentFit:88, trend:'上升', avgComm:30, price:'9.9-99', gmv:'2000万-4亿', key:'低客单高佣金，搭配属性强，适合矩阵号', content:['搭配展示','开箱分享','合集推荐','送礼攻略'], risks:['退货率偏高','品质把控','品牌差异难建立'] },
+    '玩具': { heat:78, comp:55, contentFit:82, trend:'上升', avgComm:22, price:'19-199', gmv:'3000万-5亿', key:'亲子内容天然高互动，益智解压类持续热销', content:['亲子互动','玩具开箱','玩法展示','测评推荐'], risks:['安全标准','复购周期长','潮流变化快'] },
+    '汽车': { heat:70, comp:50, contentFit:60, trend:'上升', avgComm:10, price:'29-299', gmv:'2000万-5亿', key:'汽车用品内容供给不足，有较大增长空间', content:['好物推荐','安装教程','使用对比','清单合集'], risks:['品类认知度低','部分产品售后复杂','专业度要求'] }
+  },
+  // 品类匹配（支持关键词部分匹配）
+  matchCategory(catText) {
+    const keys = Object.keys(this.categories);
+    for (const k of keys) if (catText.includes(k)) return this.categories[k];
+    let match = null, maxLen = 0;
+    for (const k of keys) {
+      if (catText.includes(k) && k.length > maxLen) { match = this.categories[k]; maxLen = k.length; }
+    }
+    return match;
+  },
+  // 达人合作参考
+  influencers: {
+    tiers: [
+      { name:'头部达人(100w+粉)', fee:'5万-50万+', comm:'15-25%', fit:['大牌美妆','数码3C','大客单'], note:'流量大品牌背书强，但成本高门槛高' },
+      { name:'腰部达人(10-100w粉)', fee:'5000-5万', comm:'20-30%', fit:['大部分品类'], note:'性价比高粉丝精准，需筛选匹配度' },
+      { name:'尾部达人(1-10w粉)', fee:'0-5000', comm:'25-35%', fit:['食品','日用','饰品'], note:'成本低适合铺量，单个效果不确定' },
+      { name:'KOC(<1w粉)', fee:'0（纯佣）', comm:'30-40%', fit:['零食','日用','低价品'], note:'几乎零成本铺量，效果极不稳定' }
+    ],
+    tips: ['选择粉丝画像与目标人群一致的达人','优先选近期带货转化率高的达人','新锐达人成长快性价比高','垂直领域转化率高于泛娱乐','达人近期内容风格决定带货效果']
+  }
+};
+
+// ========== 本地分析引擎 v3 - 市场情报驱动 ==========
 function localAnalysis(input) {
   const { category, priceMin, priceMax, audience, commission, season, competitorLevel, supplyChain, notes } = input;
   const avgPrice = (priceMin + priceMax) / 2;
-  const cat = category.toLowerCase();
-  const catText = cat;
+  const catText = category.toLowerCase();
+  const catIntel = MARKET_INTEL.matchCategory(catText); // 品类情报
 
-  // ---- 市场热度 ----
-  let marketHeat = 55;
-  // 高热度品类
-  const hotCats = ['美妆', '护肤', '母婴', '宠物', '食品', '零食', '女装', '日用', '家居'];
-  if (hotCats.some(h => catText.includes(h))) marketHeat += 20;
-  // 中热度品类
-  const midCats = ['男装', '数码', '3c', '家电', '厨具', '汽车', '户外', '运动'];
-  if (midCats.some(m => catText.includes(m))) marketHeat += 10;
-  // 人群加成
-  if (audience.includes('女性') && audience.includes('25-40')) marketHeat += 8;
-  if (audience.includes('全年龄段')) marketHeat += 5;
-  // 价格带影响
-  if (avgPrice >= 20 && avgPrice <= 150) marketHeat += 10; // 冲动消费价格带
-  if (avgPrice > 300) marketHeat -= 8;
-  // 季节性加成
-  if (season.includes('旺季')) marketHeat += 10;
-  marketHeat = Math.min(98, Math.max(10, marketHeat));
+  // ===== 1. 市场热度 ===== (权重 20%)
+  let marketHeat = 50;
+  if (catIntel) {
+    marketHeat = catIntel.heat;
+  } else {
+    if (audience.includes('女性') && audience.includes('25-40')) marketHeat += 12;
+    if (avgPrice >= 20 && avgPrice <= 150) marketHeat += 10;
+    if (avgPrice > 300) marketHeat -= 8;
+  }
+  if (season.includes('旺季')) marketHeat = Math.min(98, marketHeat + 5);
+  if (!audience.includes('全年龄段')) marketHeat = Math.min(98, marketHeat + 3);
+  marketHeat = clamp(marketHeat, 10, 98);
 
-  // ---- 竞争强度 ----
+  // ===== 2. 竞争强度 =====
   let competition = 50;
-  if (competitorLevel === '竞争激烈（有大品牌/头部达人）') competition += 25;
-  else if (competitorLevel === '竞争中等') competition += 10;
-  else if (competitorLevel === '竞争较小') competition -= 15;
-  else if (competitorLevel === '几乎没有竞品') competition -= 25;
-  // 品类默认竞争
-  if (['美妆', '女装', '食品', '零食', '护肤'].some(c => catText.includes(c))) competition += 20;
-  if (['宠物', '母婴', '家居', '日用'].some(c => catText.includes(c))) competition += 10;
-  // 低客单价竞争更激烈
-  if (avgPrice < 20) competition += 15;
-  if (avgPrice > 300) competition -= 10;
-  // 供应链优势降低竞争分
-  if (supplyChain === '自有工厂/源头' || supplyChain === '稳定合作工厂') competition -= 15;
-  if (notes.includes('独家') || notes.includes('专利') || notes.includes('自有品牌')) competition -= 15;
-  competition = Math.min(95, Math.max(5, competition));
+  if (catIntel) {
+    competition = catIntel.comp;
+  } else {
+    if (avgPrice < 20) competition += 15;
+    if (avgPrice > 300) competition -= 10;
+  }
+  if (competitorLevel.includes('竞争激烈')) competition = Math.max(competition, 78);
+  else if (competitorLevel.includes('竞争中等')) competition = Math.max(55, Math.min(75, competition));
+  else if (competitorLevel.includes('竞争较小')) competition = Math.min(45, competition);
+  else if (competitorLevel.includes('几乎没有')) competition = Math.min(28, competition);
+  if (supplyChain === '自有工厂/源头') competition -= 12;
+  else if (supplyChain === '稳定合作工厂') competition -= 8;
+  if (notes.includes('独家') || notes.includes('专利') || notes.includes('自有品牌')) competition -= 10;
+  competition = clamp(competition, 5, 96);
 
-  // ---- 利润空间 ----
+  // ===== 3. 利润空间 ===== (权重 20%)
   let profit = 50;
-  if (commission >= 30) profit += 20;
-  else if (commission >= 20) profit += 12;
-  else if (commission >= 15) profit += 5;
-  if (avgPrice >= 50 && avgPrice <= 200) profit += 12;
-  else if (avgPrice > 200 && avgPrice <= 500) profit += 18;
-  else if (avgPrice > 500) profit += 22; // 高客单毛利高
+  if (commission >= 35) profit += 25;
+  else if (commission >= 25) profit += 18;
+  else if (commission >= 20) profit += 10;
+  else if (commission >= 15) profit += 3;
+  else profit -= 10;
+  if (avgPrice >= 50 && avgPrice <= 200) profit += 14;
+  else if (avgPrice > 200 && avgPrice <= 500) profit += 16;
+  else if (avgPrice > 500) profit += 18;
   else if (avgPrice < 20) profit -= 15;
   if (supplyChain === '自有工厂/源头') profit += 15;
   else if (supplyChain === '稳定合作工厂') profit += 8;
-  if (notes.includes('工厂') || notes.includes('源头') || notes.includes('自有')) profit += 8;
-  profit = Math.min(98, Math.max(5, profit));
+  if (notes.includes('工厂') || notes.includes('源头') || notes.includes('自有')) profit += 5;
+  profit = clamp(profit, 5, 98);
 
-  // ---- 趋势走向 ----
+  // ===== 4. 趋势走向 ===== (权重 15%)
   let trend = 55;
-  if (season.includes('旺季')) trend += 15;
-  else if (season.includes('无明显季节性')) trend += 3;
-  // 上升品类
-  const risingCats = ['宠物', '美妆工具', '个护', '健康', '户外', '露营', '预制菜'];
-  if (risingCats.some(r => catText.includes(r))) trend += 12;
-  // 下滑品类
-  const fallingCats = ['口罩', '消毒', '防护'];
-  if (fallingCats.some(f => catText.includes(f))) trend -= 15;
-  // 受众年轻化加分
-  if (audience.includes('18-25')) trend += 8;
-  // 供应链稳定加分
+  if (catIntel && catIntel.trend === '上升') trend = 75;
+  else if (catIntel && catIntel.trend === '平稳') trend = 55;
+  else if (catIntel && catIntel.trend === '下降') trend = 30;
+  if (season.includes('旺季')) trend += 10;
+  if (audience.includes('18-25')) trend += 6;
   if (supplyChain === '自有工厂/源头' || supplyChain === '稳定合作工厂') trend += 5;
-  trend = Math.min(98, Math.max(5, trend));
+  trend = clamp(trend, 5, 98);
 
-  // ---- 内容适配度 ----
+  // ===== 5. 内容适配度 ===== (权重 15%)
   let contentFit = 55;
-  const visualCats = ['美妆', '护肤', '服装', '饰品', '宠物', '食品', '家居', '玩具'];
-  if (visualCats.some(v => catText.includes(v))) contentFit += 20;
-  const demoCats = ['数码', '家电', '厨具', '工具', '3c'];
-  if (demoCats.some(d => catText.includes(d))) contentFit += 15;
-  const lowContentCats = ['建材', '工业', '原材料', '服务'];
-  if (lowContentCats.some(l => catText.includes(l))) contentFit -= 15;
-  // 细分人群有利于内容精准触达
-  if (!audience.includes('全年龄段')) contentFit += 8;
-  contentFit = Math.min(98, Math.max(5, contentFit));
+  if (catIntel) {
+    contentFit = catIntel.contentFit;
+  } else {
+    const visualKeywords = ['美妆','护肤','服装','饰品','宠物','食品','家居','玩具','穿搭','改造'];
+    const demoKeywords = ['数码','家电','厨具','工具','3c','手机','电脑','器','用品'];
+    if (visualKeywords.some(k => catText.includes(k))) contentFit += 18;
+    if (demoKeywords.some(k => catText.includes(k))) contentFit += 12;
+  }
+  if (!audience.includes('全年龄段')) contentFit += 6;
+  contentFit = clamp(contentFit, 5, 98);
 
-  // ---- 供应链评估 ----
+  // ===== 6. 供应链评估 ===== (权重 10%)
   let supplyChainScore = 50;
-  if (supplyChain === '自有工厂/源头') supplyChainScore += 25;
-  else if (supplyChain === '稳定合作工厂') supplyChainScore += 15;
+  if (supplyChain === '自有工厂/源头') supplyChainScore += 28;
+  else if (supplyChain === '稳定合作工厂') supplyChainScore += 18;
   else if (supplyChain === '1688采购') supplyChainScore += 5;
   else if (supplyChain === '代理/分销') supplyChainScore -= 5;
   if (notes.includes('独家') || notes.includes('专利')) supplyChainScore += 15;
-  if (notes.includes('工厂') || notes.includes('源头')) supplyChainScore += 10;
+  if (notes.includes('工厂') || notes.includes('源头')) supplyChainScore += 8;
   if (avgPrice > 100) supplyChainScore += 5;
-  supplyChainScore = Math.min(98, Math.max(5, supplyChainScore));
+  supplyChainScore = clamp(supplyChainScore, 5, 98);
 
-  // ---- 综合计算 ----
+  // ===== 综合评分 =====
   const effectiveComp = 100 - competition;
   const totalScore = Math.round(
-    (marketHeat * 0.2) +
-    (effectiveComp * 0.2) +
-    (profit * 0.2) +
-    (trend * 0.15) +
-    (contentFit * 0.15) +
-    (supplyChainScore * 0.1)
+    marketHeat * 0.20 + effectiveComp * 0.20 + profit * 0.20 + trend * 0.15 + contentFit * 0.15 + supplyChainScore * 0.10
   );
-
   const verdict = totalScore >= 70 ? '建议入手' : totalScore >= 45 ? '谨慎评估' : '不太建议';
+  const riskLevel = totalScore >= 70 ? '低' : totalScore >= 45 ? '中' : '高';
 
-  // ---- 市场分析文本 ----
-  const marketText = marketHeat >= 70
-    ? `${category}在抖音属于高热度赛道，内容消费量大，用户需求旺盛。`
-    : marketHeat >= 45
-    ? `${category}在抖音有稳定市场需求，属于成熟品类。`
-    : `${category}在抖音属于长尾品类，搜索量不高但竞争较小。`;
+  // ===== 分析文本 =====
+  const heatSummary = catIntel
+    ? `${category}在抖音属于${marketHeat >= 80 ? '高' : marketHeat >= 60 ? '中等' : '细分'}热度赛道。${catIntel.key}`
+    : `${category}在抖音有${marketHeat >= 70 ? '较高的' : marketHeat >= 45 ? '稳定的' : '长尾'}市场需求。`;
 
-  const compText = competition >= 65
-    ? `竞争相对激烈，建议走差异化路线`
-    : competition >= 35
-    ? `竞争适中，有发挥空间`
-    : `蓝海市场，先发优势明显`;
+  const compSummary = competition >= 70
+    ? `竞争激烈，${catIntel ? (catIntel.risks[0] || '需要强差异化') : '需要强差异化定位'}`
+    : competition >= 45
+    ? '竞争适中，有发挥空间，找准细分切入点可稳定盈利'
+    : '蓝海市场，竞争较小，先发优势明显，是切入的好时机';
 
-  // ---- 内容策略 ----
-  const strategies = [
-    `开箱/测评内容，突出${category}的核心亮点和性价比`,
-    `场景化种草，用${audience.includes('女性') ? '宝妈/职场女性的真实痛点' : '目标用户的日常场景'}引发共鸣`,
-    `对比测评同品类产品，建立专业信任感`,
-    `限时优惠+赠品策略，刺激冲动消费`,
-    `固定时间直播，培养粉丝观看习惯`
-  ];
+  let roiEst, breakEven;
+  if (profit >= 75) { roiEst = '1:3.5 ~ 1:6'; breakEven = '1-2周'; }
+  else if (profit >= 60) { roiEst = '1:2.5 ~ 1:4'; breakEven = '2-4周'; }
+  else if (profit >= 40) { roiEst = '1:1.5 ~ 1:2.5'; breakEven = '1-2个月'; }
+  else { roiEst = '1:1 ~ 1:1.5'; breakEven = '2-3个月+'; }
+  const profitSummary = `佣金${commission}%，客单价${Math.round(avgPrice)}元。${profit >= 65 ? '利润空间可观，适合重点投入' : profit >= 45 ? '利润空间合理，精细运营可盈利' : '利润空间偏薄，需走量或降本'}`;
 
-  // ---- 风险 ----
-  const risks = [];
+  const trendDirection = trend >= 65 ? '上升' : trend >= 40 ? '平稳' : '下滑';
+  const trendSummary = catIntel
+    ? `品类整体呈${catIntel.trend}趋势，${catIntel.key}`
+    : `品类趋势${trendDirection}，${season}`;
+
+  const contentType = contentFit >= 70 ? '短视频种草 + 直播转化' : contentFit >= 50 ? '直播为主 + 短视频引流' : '直播带货为主';
+  const contentDifficulty = contentFit >= 70 ? '低' : contentFit >= 50 ? '中等' : '较高';
+  const contentSummary = contentFit >= 70
+    ? `${category}天然适合短视频和直播展示，内容制作门槛低，传播力强。`
+    : contentFit >= 50
+    ? `${category}可通过合适的内容形式有效带货，制作难度适中。`
+    : `${category}内容展示有一定门槛，建议结合直播+专业讲解。`;
+
+  const scSummary = supplyChainScore >= 70
+    ? `供应链基础扎实${supplyChain.includes('工厂') ? '，源头优势明显' : ''}，货源稳定有保障。`
+    : supplyChainScore >= 45
+    ? '供应链基本稳定，建议持续优化成本和品控。'
+    : '供应链有待加强，建议先解决货源稳定性问题再规模化。';
+
+  // ===== 内容策略 (品类化) =====
+  let strategies;
+  if (catIntel && catIntel.content) {
+    const ctypes = catIntel.content;
+    strategies = [
+      `${ctypes[0]}内容为主，突出${category}的核心卖点和差异化`,
+      `${ctypes[1] || ctypes[0]}，用真实场景和${audience.includes('女性') ? '女性' : '目标'}用户的痛点引发共鸣`,
+      `结合${season.includes('旺季') ? '当季热点' : '日常需求'}，做${ctypes[2] || '系列化'}内容形成矩阵`,
+      `配合限时优惠+赠品组合，在直播中做集中转化`,
+      `固定时间开播（建议下午2-4点或晚上8-10点），培养粉丝观看习惯`
+    ];
+  } else {
+    strategies = [
+      `开箱/测评内容，突出${category}的核心亮点和性价比`,
+      `场景化种草，用${audience.includes('女性') ? '宝妈/职场女性的真实痛点' : '目标用户的日常场景'}引发共鸣`,
+      `对比同品类产品，建立专业信任感`,
+      `限时优惠+赠品策略，刺激冲动消费`,
+      `固定时间直播，培养粉丝观看习惯`
+    ];
+  }
+
+  // ===== 风险识别 =====
   const riskItems = [];
-  if (competition >= 70) riskItems.push({ risk: '竞争激烈，起号周期可能较长', severity: '高', mitigation: '建议从细分场景切入，做差异化内容' });
-  if (avgPrice < 20) riskItems.push({ risk: '低客单价需要走量，利润薄', severity: '中', mitigation: '考虑搭配销售或设置阶梯价格' });
-  if (avgPrice > 300) riskItems.push({ risk: '高客单价转化难，决策周期长', severity: '中', mitigation: '需要建立信任背书，建议先做内容积累' });
-  if (commission < 15) riskItems.push({ risk: '佣金比例偏低，ROI回收压力大', severity: '高', mitigation: '尝试与商家谈判提高佣金，或走量换议价' });
-  if (supplyChain === '未填写' || supplyChain === '代理/分销') riskItems.push({ risk: '供应链不明确，可能存在货源不稳定风险', severity: '中', mitigation: '建议先确定稳定供货渠道再大规模推广' });
-  if (riskItems.length === 0) riskItems.push({ risk: '当前信息下未发现明显风险', severity: '低', mitigation: '建议小规模试跑验证数据' });
+  if (catIntel && catIntel.risks) {
+    catIntel.risks.forEach(r => {
+      riskItems.push({ risk: r, severity: '中', mitigation: '提前评估并制定应对方案' });
+    });
+  }
+  if (competition >= 75 && !riskItems.some(r => r.risk.includes('竞争')))
+    riskItems.push({ risk: '竞争激烈，起号周期可能较长', severity: '高', mitigation: '从细分场景/人群切入，做差异化内容' });
+  if (avgPrice < 20 && !riskItems.some(r => r.risk.includes('客单')))
+    riskItems.push({ risk: '低客单价需要走量，单件利润薄', severity: '中', mitigation: '搭配销售或设置阶梯价格，提高客单价' });
+  if (avgPrice > 300 && !riskItems.some(r => r.risk.includes('客单')))
+    riskItems.push({ risk: '高客单价转化难，用户决策周期长', severity: '中', mitigation: '先做内容积累信任，配合达人背书降低决策门槛' });
+  if (commission < 15)
+    riskItems.push({ risk: '佣金比例偏低，ROI回收压力大', severity: '高', mitigation: '与商家谈判提高佣金，或以量换价' });
+  if (supplyChain === '未填写' || supplyChain === '代理/分销')
+    riskItems.push({ risk: '供应链不稳定，可能影响持续供货', severity: '中', mitigation: '先确定稳定供货渠道再大规模推广' });
+
+  // ===== 市场参考 =====
+  const marketRefs = {
+    similarProducts: catIntel ? `${category}赛道在抖音竞争${competition >= 70 ? '激烈' : '适中'}，${catIntel.key}` : '建议调研对标账号和竞品',
+    priceRange: catIntel ? `${catIntel.price}元（行业参考）` : (avgPrice >= 100 ? '中高客单价段' : '中低客单价段'),
+    targetGMV: catIntel ? `参考：${catIntel.gmv}` : '建议小规模试跑后评估'
+  };
+
+  // ===== 标签 =====
+  const tags = [
+    marketHeat >= 75 ? '高热度' : marketHeat >= 50 ? '中等热度' : '细分品类',
+    competition >= 70 ? '红海品类' : competition <= 35 ? '蓝海品类' : '中等竞争',
+    profit >= 65 ? '利润可观' : profit >= 45 ? '利润合理' : '利润偏薄',
+    trend >= 65 ? '上升趋势' : '趋势平稳'
+  ];
+  if (catIntel) tags.push(catIntel.avgComm >= 25 ? '高佣品类' : '标准佣金');
+
+  // ===== 达人合作建议 =====
+  const influencerAdvice = [];
+  if (avgPrice > 200) {
+    influencerAdvice.push('高客单价建议优先合作腰部以上达人，利用信任背书降低决策门槛');
+  } else if (avgPrice < 50) {
+    influencerAdvice.push('低客单价适合大量铺KOC+尾部达人，以量取胜');
+  } else {
+    influencerAdvice.push('建议腰部达人+尾部达人组合：腰部做信任背书，尾部做铺量');
+  }
+  if (contentFit >= 70) influencerAdvice.push('内容制作门槛低，适合大量铺内容型达人');
+  if (commission >= 25) influencerAdvice.push('高佣金优势明显，利于达人合作谈判');
 
   return {
     scores: {
@@ -728,33 +864,27 @@ function localAnalysis(input) {
       supplyChain: Math.round(supplyChainScore)
     },
     dimensionAnalysis: {
-      marketHeat: { score: Math.round(marketHeat), summary: marketText, factors: ['品类热度良好', '价格带适宜'] },
-      competition: { score: Math.round(competition), summary: compText, entryBarrier: competition >= 65 ? '较高' : '适中', differentiation: '建议聚焦细分场景做差异化' },
-      profit: { score: Math.round(profit), summary: `佣金${commission}%${profit >= 65 ? '，利润空间可观' : '，利润空间一般'}`, roiEstimate: profit >= 65 ? '1:3 ~ 1:5' : '1:1.5 ~ 1:3', breakEven: profit >= 65 ? '1-2个月' : '2-3个月' },
-      trend: { score: Math.round(trend), summary: trend >= 60 ? '品类整体呈上升趋势' : '品类趋势平稳', direction: trend >= 60 ? '上升' : '平稳', seasonality: season },
-      contentFit: { score: Math.round(contentFit), summary: contentFit >= 65 ? '适合通过短视频和直播带货' : '内容制作门槛中等', contentType: contentFit >= 65 ? '短视频种草 + 直播转化' : '直播为主', difficulty: contentFit >= 65 ? '低' : '中等' },
-      supplyChain: { score: Math.round(supplyChainScore), summary: supplyChainScore >= 60 ? '供应链基础良好' : '供应链有待完善' }
+      marketHeat: { score:Math.round(marketHeat), summary:heatSummary, factors:catIntel?catIntel.content.slice(0,2):['品类需求稳定','价格带适宜'] },
+      competition: { score:Math.round(competition), summary:compSummary, entryBarrier:competition>=65?'较高':competition>=40?'适中':'较低', differentiation:competition>=65?'建议聚焦细分场景/人群做差异化切入':competition>=40?'找到差异化定位即可稳定盈利':'先发优势明显，尽快建立壁垒' },
+      profit: { score:Math.round(profit), summary:profitSummary, roiEstimate:roiEst, breakEven:breakEven },
+      trend: { score:Math.round(trend), summary:trendSummary, direction:trendDirection, seasonality:season },
+      contentFit: { score:Math.round(contentFit), summary:contentSummary, contentType:contentType, difficulty:contentDifficulty },
+      supplyChain: { score:Math.round(supplyChainScore), summary:scSummary }
     },
     overall: {
-      totalScore,
-      verdict,
-      recommendedAction: totalScore >= 70 ? '可以积极布局，尽快起号' : totalScore >= 45 ? '建议小规模试跑，验证数据后决定' : '建议换品类或优化供应链后再评估',
-      riskLevel: totalScore >= 70 ? '低' : totalScore >= 45 ? '中' : '高'
+      totalScore, verdict, riskLevel,
+      recommendedAction: totalScore >= 70 ? '可以积极布局，尽快起号测试' : totalScore >= 45 ? '建议小规模试跑2-4周，验证数据后再决定是否加码' : '建议重新评估品类或优化供应链/佣金后再做决策'
     },
     contentStrategy: strategies,
-    risks: riskItems,
-    tags: [
-      marketHeat >= 70 ? '高热度' : '中等热度',
-      competition >= 65 ? '红海品类' : competition <= 35 ? '蓝海品类' : '中等竞争',
-      profit >= 65 ? '利润可观' : '利润一般'
-    ],
-    marketRefs: {
-      similarProducts: '市面上同类产品众多，需差异化定位',
-      priceRange: avgPrice >= 100 ? '中高客单价段' : '中低客单价段',
-      targetGMV: '建议小规模试跑后评估'
-    }
+    risks: riskItems.slice(0, 5),
+    tags: tags.slice(0, 5),
+    marketRefs,
+    influencerAdvice,
+    _source: catIntel ? '品类知识库 + 用户输入' : '通用分析模型'
   };
 }
+
+function clamp(v, min, max) { return Math.min(max, Math.max(min, v)); }
 
 // ========== 表单重置 ==========
 function resetForm() {
@@ -771,6 +901,8 @@ function resetForm() {
   document.getElementById('monthlySales').value = '';
   document.getElementById('notes').value = '';
   document.getElementById('marketRefCard').style.display = 'none';
+  document.getElementById('influencerCard').style.display = 'none';
+  document.getElementById('dataSource').textContent = '';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 

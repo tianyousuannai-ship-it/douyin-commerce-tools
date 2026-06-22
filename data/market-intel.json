@@ -1,0 +1,245 @@
+{
+  "_description": "抖音选品市场情报数据 - 基于公开数据和行业经验估算，持续更新",
+
+  "categoryIntel": {
+    "美妆": {
+      "marketHeat": 88, "competition": 82, "contentFit": 90, "trend": "上升",
+      "avgCommission": 25, "priceRange": "39-199元", "monthlyGMV": "5000万-10亿+",
+      "strategyTags": ["成分党", "平替", "妆教", "before/after"],
+      "keyInsight": "国货美妆持续爆发，成分+性价比是核心卖点",
+      "topContentTypes": ["妆教教程", "产品测评", "素人改造", "成分解析"],
+      "riskFactors": ["品牌集中度高", "退货率偏高(8-15%)", "信任门槛高"],
+      "seasonality": "无明显季节性，大促期间爆发明显"
+    },
+    "护肤": {
+      "marketHeat": 85, "competition": 78, "contentFit": 88, "trend": "上升",
+      "avgCommission": 25, "priceRange": "59-299元", "monthlyGMV": "1亿-15亿+",
+      "strategyTags": ["成分科普", "护肤routine", "敏感肌", "抗老"],
+      "keyInsight": "功效护肤成主流，成分党驱动消费决策",
+      "topContentTypes": ["成分科普", "护肤教程", "产品测评", "周期打卡"],
+      "riskFactors": ["功效承诺风险", "过敏/售后问题", "品牌信任构建周期长"],
+      "seasonality": "换季+大促爆发"
+    },
+    "母婴": {
+      "marketHeat": 82, "competition": 70, "contentFit": 85, "trend": "上升",
+      "avgCommission": 20, "priceRange": "29-199元", "monthlyGMV": "5000万-5亿",
+      "strategyTags": ["宝妈带娃", "宝宝好物", "安全材质", "实用推荐"],
+      "keyInsight": "宝妈群体粘性高、复购强，信任一旦建立转化极好",
+      "topContentTypes": ["带娃日常", "好物开箱", "使用对比", "亲子互动"],
+      "riskFactors": ["安全标准严格", "品牌忠诚度高切换难", "决策周期长"],
+      "seasonality": "无明显季节性"
+    },
+    "食品": {
+      "marketHeat": 90, "competition": 85, "contentFit": 82, "trend": "平稳",
+      "avgCommission": 20, "priceRange": "9.9-99元", "monthlyGMV": "1亿-20亿+",
+      "strategyTags": ["吃播", "零食开箱", "办公室零食", "地方特产"],
+      "keyInsight": "低客单冲动消费，适合走量，但利润薄",
+      "topContentTypes": ["吃播展示", "零食大礼包", "产地溯源", "价格对比"],
+      "riskFactors": ["同质化严重", "利润薄需要走量", "食品安全风险"],
+      "seasonality": "节假日+大促爆发"
+    },
+    "零食": {
+      "marketHeat": 88, "competition": 83, "contentFit": 80, "trend": "平稳",
+      "avgCommission": 20, "priceRange": "9.9-59元", "monthlyGMV": "5000万-8亿",
+      "strategyTags": ["办公室零食", "追剧伴侣", "童年回忆", "网红零食"],
+      "keyInsight": "冲动消费为主，视觉呈现和价格是关键",
+      "topContentTypes": ["吃播", "开箱试吃", "囤货攻略", "零食测评"],
+      "riskFactors": ["复购率不稳定", "跟风后迅速降温", "价格战"],
+      "seasonality": "无明显季节性"
+    },
+    "女装": {
+      "marketHeat": 92, "competition": 90, "contentFit": 92, "trend": "平稳",
+      "avgCommission": 20, "priceRange": "49-299元", "monthlyGMV": "2亿-30亿+",
+      "strategyTags": ["穿搭", "显瘦", "平价替代", "一衣多穿"],
+      "keyInsight": "最大品类但竞争激烈，需要强视觉+强人设",
+      "topContentTypes": ["穿搭展示", "试穿对比", "衣橱整理", "平替推荐"],
+      "riskFactors": ["退货率高(20-35%)", "库存压力大", "跟风流行周期短"],
+      "seasonality": "春夏/秋冬两季换新爆发"
+    },
+    "男装": {
+      "marketHeat": 72, "competition": 62, "contentFit": 70, "trend": "上升",
+      "avgCommission": 20, "priceRange": "59-299元", "monthlyGMV": "3000万-5亿",
+      "strategyTags": ["男友穿搭", "职场穿搭", "基础款", "性价比"],
+      "keyInsight": "男装内容供给缺口大，竞争相对较小，增长空间可观",
+      "topContentTypes": ["穿搭改造", "单品推荐", "品牌对比", "场景穿搭"],
+      "riskFactors": ["决策周期长", "内容吸引力偏弱", "退货率中等"],
+      "seasonality": "换季+大促"
+    },
+    "宠物": {
+      "marketHeat": 86, "competition": 72, "contentFit": 90, "trend": "上升",
+      "avgCommission": 22, "priceRange": "29-199元", "monthlyGMV": "5000万-5亿",
+      "strategyTags": ["萌宠", "养宠好物", "平价养宠", "宠物健康"],
+      "keyInsight": "宠物赛道增长强劲，萌宠内容天然高互动",
+      "topContentTypes": ["萌宠日常", "好物推荐", "养宠科普", "宠物改造"],
+      "riskFactors": ["品牌集中度提升中", "宠物食品安全敏感", "专业度门槛"],
+      "seasonality": "无明显季节性"
+    },
+    "数码": {
+      "marketHeat": 78, "competition": 68, "contentFit": 72, "trend": "平稳",
+      "avgCommission": 12, "priceRange": "99-999元", "monthlyGMV": "1亿-10亿+",
+      "strategyTags": ["数码评测", "性价比", "黑科技", "学生党"],
+      "keyInsight": "客单价高但佣金偏低，适合长线做信任+带货组合",
+      "topContentTypes": ["开箱评测", "参数对比", "使用教程", "避坑指南"],
+      "riskFactors": ["佣金偏低", "售后复杂", "品牌方控价"],
+      "seasonality": "新品发布季+618/双11"
+    },
+    "3c": {
+      "marketHeat": 75, "competition": 65, "contentFit": 68, "trend": "平稳",
+      "avgCommission": 10, "priceRange": "99-1999元", "monthlyGMV": "1亿-15亿+",
+      "strategyTags": ["数码", "开箱", "评测", "性价比"],
+      "keyInsight": "佣金低但客单价高，适合信任型达人",
+      "topContentTypes": ["新品开箱", "对比评测", "使用技巧", "避坑"],
+      "riskFactors": ["佣金极低", "退货率高", "需要专业背书"],
+      "seasonality": "新品季+大促"
+    },
+    "家电": {
+      "marketHeat": 74, "competition": 60, "contentFit": 68, "trend": "上升",
+      "avgCommission": 15, "priceRange": "199-1999元", "monthlyGMV": "5000万-8亿",
+      "strategyTags": ["提升幸福感", "懒人必备", "小家电", "智能家居"],
+      "keyInsight": "小家电内容空间大，解决具体痛点容易出爆款",
+      "topContentTypes": ["使用场景", "效果对比", "开箱安装", "生活改造"],
+      "riskFactors": ["退货售后复杂", "安装服务", "品牌集中"],
+      "seasonality": "冬季/夏季季节性家电爆发"
+    },
+    "厨具": {
+      "marketHeat": 72, "competition": 55, "contentFit": 78, "trend": "上升",
+      "avgCommission": 18, "priceRange": "29-299元", "monthlyGMV": "2000万-3亿",
+      "strategyTags": ["厨房好物", "懒人做饭", "收纳", "平价厨具"],
+      "keyInsight": "厨房场景内容丰富，实用型产品转化率高",
+      "topContentTypes": ["使用演示", "收纳整理", "做饭教程", "好物合集"],
+      "riskFactors": ["客单价偏低", "品牌溢价难", "品质参差"],
+      "seasonality": "无明显季节性"
+    },
+    "家居": {
+      "marketHeat": 80, "competition": 65, "contentFit": 85, "trend": "上升",
+      "avgCommission": 22, "priceRange": "19-299元", "monthlyGMV": "5000万-8亿",
+      "strategyTags": ["收纳", "提升幸福感", "租房改造", "居家好物"],
+      "keyInsight": "家居品类内容天然适合展示，改造类内容传播力强",
+      "topContentTypes": ["改造vlog", "收纳攻略", "好物开箱", "租房好物"],
+      "riskFactors": ["大件物流", "安装售后", "选品把控"],
+      "seasonality": "换季+年末大扫除"
+    },
+    "日用": {
+      "marketHeat": 76, "competition": 58, "contentFit": 65, "trend": "平稳",
+      "avgCommission": 25, "priceRange": "9.9-99元", "monthlyGMV": "3000万-5亿",
+      "strategyTags": ["生活好物", "省钱", "实用", "必备"],
+      "keyInsight": "刚需品类，复购率高，适合走量型带货",
+      "topContentTypes": ["好物合集", "对比推荐", "生活技巧", "性价比榜单"],
+      "riskFactors": ["品类印象值低", "品牌溢价难", "利润偏薄"],
+      "seasonality": "无明显季节性"
+    },
+    "运动": {
+      "marketHeat": 78, "competition": 60, "contentFit": 78, "trend": "上升",
+      "avgCommission": 20, "priceRange": "49-299元", "monthlyGMV": "3000万-5亿",
+      "strategyTags": ["健身", "运动穿搭", "装备评测", "性价比"],
+      "keyInsight": "运动健康趋势持续上升，内容驱动购买力强",
+      "topContentTypes": ["健身教程", "装备开箱", "效果展示", "穿搭分享"],
+      "riskFactors": ["季节性波动", "品牌认知门槛", "品类分散"],
+      "seasonality": "春夏旺季，秋冬平稳"
+    },
+    "户外": {
+      "marketHeat": 82, "competition": 55, "contentFit": 85, "trend": "上升",
+      "avgCommission": 22, "priceRange": "49-499元", "monthlyGMV": "3000万-6亿",
+      "strategyTags": ["露营", "户外装备", "徒步", "野餐"],
+      "keyInsight": "户外露营热潮持续，内容天然高互动高传播",
+      "topContentTypes": ["露营vlog", "装备分享", "户外攻略", "场景展示"],
+      "riskFactors": ["季节性强", "复购周期长", "天气依赖"],
+      "seasonality": "春夏季旺季，冬季平稳"
+    },
+    "饰品": {
+      "marketHeat": 75, "competition": 62, "contentFit": 88, "trend": "上升",
+      "avgCommission": 30, "priceRange": "9.9-99元", "monthlyGMV": "2000万-4亿",
+      "strategyTags": ["穿搭搭配", "平价饰品", "显气质", "送礼"],
+      "keyInsight": "低客单高佣金，搭配属性强，适合矩阵号操作",
+      "topContentTypes": ["搭配展示", "开箱分享", "合集推荐", "送礼攻略"],
+      "riskFactors": ["退货率偏高", "品质把控", "品牌差异难建立"],
+      "seasonality": "节假日+送礼季爆发"
+    },
+    "玩具": {
+      "marketHeat": 78, "competition": 55, "contentFit": 82, "trend": "上升",
+      "avgCommission": 22, "priceRange": "19-199元", "monthlyGMV": "3000万-5亿",
+      "strategyTags": ["亲子", "益智", "解压", "送礼"],
+      "keyInsight": "亲子内容天然高互动，益智类+解压类持续热销",
+      "topContentTypes": ["亲子互动", "玩具开箱", "玩法展示", "测评推荐"],
+      "riskFactors": ["安全标准", "复购周期长", "潮流变化快"],
+      "seasonality": "节假日+寒暑假爆发"
+    },
+    "汽车": {
+      "marketHeat": 70, "competition": 50, "contentFit": 60, "trend": "上升",
+      "avgCommission": 10, "priceRange": "29-299元", "monthlyGMV": "2000万-5亿",
+      "strategyTags": ["车载好物", "新车必备", "改装", "实用"],
+      "keyInsight": "汽车用品内容优质供给不足，有较大增长空间",
+      "topContentTypes": ["好物推荐", "安装教程", "使用对比", "清单合集"],
+      "riskFactors": ["品类认知度低", "部分产品售后复杂", "专业度要求"],
+      "seasonality": "无明显季节性"
+    }
+  },
+
+  "marketBenchmarks": {
+    "commissionRanges": {
+      "高佣金(25%+)": ["美妆工具", "饰品", "日用百货", "保健品", "零食"],
+      "中佣金(15-25%)": ["美妆", "护肤", "母婴", "宠物", "服装", "家居", "运动户外"],
+      "低佣金(<15%)": ["数码", "3C", "家电", "汽车用品", "大牌美妆"]
+    },
+    "roiBenchmarks": {
+      "优秀": {"roi": "1:5以上", "条件": "高佣金+高热品类+强内容力"},
+      "良好": {"roi": "1:3至1:5", "条件": "中高佣金+稳定品类+中等竞争"},
+      "一般": {"roi": "1:1.5至1:3", "条件": "低佣金或竞争激烈"},
+      "风险": {"roi": "1:1.5以下", "条件": "低佣金+高竞争+低内容适配"}
+    },
+    "returnRates": {
+      "低(<5%)": ["食品", "零食", "日用消耗品"],
+      "中(5-15%)": ["家居", "厨具", "宠物用品", "母婴", "运动户外"],
+      "高(15-30%)": ["女装", "美妆", "护肤", "饰品"],
+      "极高(>30%)": ["部分女装", "鞋类"]
+    }
+  },
+
+  "influencerData": {
+    "_description": "达人合作参考数据 - 基于行业平均水平",
+    "tiers": {
+      "头部达人(100w+粉)": {
+        "坑位费": "5万-50万+", "佣金": "15-25%", "适合品类": ["大牌美妆", "数码3C", "大客单"],
+        "优势": "流量大，品牌背书强", "劣势": "成本高，合作门槛高"
+      },
+      "腰部达人(10w-100w粉)": {
+        "坑位费": "5000-5万", "佣金": "20-30%", "适合品类": ["大部分品类"],
+        "优势": "性价比高，粉丝精准", "劣势": "需要筛选匹配度"
+      },
+      "尾部达人(1w-10w粉)": {
+        "坑位费": "0-5000", "佣金": "25-35%", "适合品类": ["食品", "日用", "饰品"],
+        "优势": "成本低，适合铺量", "劣势": "单个达人效果不确定"
+      },
+      "KOC(<1w粉)": {
+        "坑位费": "0（纯佣）", "佣金": "30-40%", "适合品类": ["零食", "日用", "低价品"],
+        "优势": "几乎零成本铺量", "劣势": "效果极不稳定"
+      }
+    },
+    "selectionTips": [
+      "选择粉丝画像与目标人群一致的达人",
+      "优先选择近期带货转化率高的达人",
+      "新锐达人成长快，合作性价比高",
+      "垂直领域达人比泛娱乐达人转化率高",
+      "达人近期内容风格决定带货效果"
+    ]
+  },
+
+  "contentStrategyLibrary": {
+    "短视频类型": {
+      "开箱测评": {"适合品类": ["美妆", "数码", "食品", "宠物"], "制作难度": "低", "转化力": "高"},
+      "使用教程": {"适合品类": ["美妆", "厨具", "数码", "家电"], "制作难度": "中", "转化力": "高"},
+      "场景种草": {"适合品类": ["服装", "家居", "户外", "母婴"], "制作难度": "中", "转化力": "高"},
+      "对比评测": {"适合品类": ["数码", "家电", "美妆", "食品"], "制作难度": "中", "转化力": "高"},
+      "生活vlog": {"适合品类": ["家居", "日用", "食品", "宠物"], "制作难度": "中", "转化力": "中"},
+      "知识科普": {"适合品类": ["护肤", "母婴", "宠物", "运动"], "制作难度": "中", "转化力": "高"},
+      "清单合集": {"适合品类": ["日用", "家居", "零食", "饰品"], "制作难度": "低", "转化力": "高"}
+    },
+    "直播策略": {
+      "工厂溯源": "适合有供应链优势的品类，突出源头价格",
+      "使用教学": "适合需要演示的产品，边教边卖",
+      "限时秒杀": "适合冲动消费品类，营造紧迫感",
+      "组合套装": "提高客单价，适合日用消耗品",
+      "达人专场": "利用达人信任背书，适合高客单品类"
+    }
+  }
+}
