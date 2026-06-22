@@ -1,7 +1,4 @@
 {
   "buildCommand": "",
-  "outputDirectory": ".",
-  "rewrites": [
-    { "source": "/api/analyze", "destination": "/api/analyze" }
-  ]
+  "outputDirectory": "."
 }
