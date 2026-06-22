@@ -333,6 +333,12 @@
       <div class="market-refs" id="marketRefs"></div>
     </div>
 
+    <!-- 竞争格局 -->
+    <div class="card" id="competeCard" style="display:none">
+      <div class="card-label">竞争格局</div>
+      <div id="competitiveLandscape"></div>
+    </div>
+
     <!-- 内容策略 -->
     <div class="card">
       <div class="section-title">内容策略建议</div>
@@ -562,6 +568,9 @@ function displayResult(data, input) {
     { key: 'similarProducts', label: '同类产品参考' },
     { key: 'priceRange', label: '主流价格带' },
     { key: 'targetGMV', label: '预估月GMV' }
+    { key: 'searchVolume', label: '搜索热度' },
+    { key: 'contentDensity', label: '内容供给密度' },
+    { key: 'conversionRate', label: '带货转化率' }
   ];
   const hasRefs = refKeys.some(r => refs[r.key]);
   if (hasRefs) {
@@ -572,6 +581,26 @@ function displayResult(data, input) {
   }
 
   // 内容策略
+
+  // 竞争格局
+  const compete = data.competitiveLandscape || {};
+  if (compete.topPlayers || compete.marketGap || compete.entryAdvantage) {
+    document.getElementById('competeCard').style.display = 'block';
+    let competeHtml = '';
+    if (compete.topPlayers) {
+      competeHtml += '<p style="font-size:13px;margin:6px 0;color:var(--text)">' + compete.topPlayers.map(p => '▶ ' + p).join('<br>') + '</p>';
+    }
+    if (compete.commonPricing) {
+      competeHtml += '<div class="market-ref-item" style="text-align:left;margin:6px 0"><div class="ref-label">定价策略</div><div class="ref-value">' + compete.commonPricing + '</div></div>';
+    }
+    if (compete.marketGap) {
+      competeHtml += '<div class="market-ref-item" style="text-align:left;margin:6px 0"><div class="ref-label">市场空白</div><div class="ref-value">' + compete.marketGap + '</div></div>';
+    }
+    if (compete.entryAdvantage) {
+      competeHtml += '<div class="market-ref-item" style="text-align:left;margin:6px 0;background:#e8f8ed;border-radius:8px;padding:10px"><div class="ref-label" style="color:#1a7f3a">入场优势</div><div class="ref-value" style="color:#1a7f3a">' + compete.entryAdvantage + '</div></div>';
+    }
+    document.getElementById('competitiveLandscape').innerHTML = competeHtml;
+  }
   const strategies = data.contentStrategy || [];
   document.getElementById('strategyList').innerHTML = strategies.map(s =>
     `<li>${s}</li>`
@@ -901,6 +930,7 @@ function resetForm() {
   document.getElementById('monthlySales').value = '';
   document.getElementById('notes').value = '';
   document.getElementById('marketRefCard').style.display = 'none';
+  document.getElementById('competeCard').style.display = 'none';
   document.getElementById('influencerCard').style.display = 'none';
   document.getElementById('dataSource').textContent = '';
   window.scrollTo({ top: 0, behavior: 'smooth' });
